@@ -1,0 +1,28 @@
+{
+  "name": "dom-text-autocomplete",
+  "version": "1.0.0",
+  "description": "Autocomplete for input",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dom",
+    "autocomplete",
+    "input",
+    "dropdown"
+  ],
+  "author": "Quentin Engles <hollowdoor99@gmail.com> (https://hollowdoor.github.io/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hollowdoor/dom_text_autocomplete.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hollowdoor/dom_text_autocomplete/issues"
+  },
+  "homepage": "https://github.com/hollowdoor/dom_text_autocomplete#readme"
+}
