@@ -37,5 +37,10 @@
   },
   "homepage": "https://github.com/hollowdoor/dom_text_autocomplete#readme",
   "jsnext:main": "dist/bundle.es.js",
-  "module": "dist/bundle.es.js"
+  "module": "dist/bundle.es.js",
+  "dependencies": {
+    "camelcase": "^4.1.0",
+    "dom-elementals": "^1.0.1",
+    "matches-selector": "^1.2.0"
+  }
 }
