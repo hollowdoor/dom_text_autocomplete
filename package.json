@@ -2,12 +2,23 @@
   "name": "dom-text-autocomplete",
   "version": "1.0.0",
   "description": "Autocomplete for input",
-  "main": "index.js",
+  "main": "dist/bundle.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run build",
+    "build": "ebam"
+  },
+  "ebam": {
+    "entry": "src/index.js",
+    "test": {
+      "src": "test/src.js",
+      "dest": "test/code.js"
+    },
+    "transforms": {
+      "dangerousTaggedTemplateString": true
+    }
   },
   "keywords": [
     "dom",
@@ -24,5 +35,7 @@
   "bugs": {
     "url": "https://github.com/hollowdoor/dom_text_autocomplete/issues"
   },
-  "homepage": "https://github.com/hollowdoor/dom_text_autocomplete#readme"
+  "homepage": "https://github.com/hollowdoor/dom_text_autocomplete#readme",
+  "jsnext:main": "dist/bundle.es.js",
+  "module": "dist/bundle.es.js"
 }
