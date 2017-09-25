@@ -5,7 +5,7 @@ import camelcase from 'camelcase';
 class DOMTextAutocomplete {
     constructor(input, {
         parent = '<ol></ol>',
-        targets = {},
+        classes = {},
         target = null,
         dataKey = 'value',
         display = 'block',
@@ -29,23 +29,45 @@ class DOMTextAutocomplete {
         }
 
         let {
-            main = '.main-target',
-            data = '.value-target'
-        } = (targets || {});
+            main = 'main-target',
+            data = 'value-target',
+            selected = 'auto-selected'
+        } = (classes || {});
 
-        targets = this.targets = {
-            main, data
+        classes = this.classes = {
+            main, data, selected
         };
 
         this.display = display;
         this.dataKey = dataKey;
+
         const dataProp = this.dataProp = camelcase(dataKey);
 
         this.element = toElement(parent);
         this.element.style.opacity = 0;
 
+        function onArrow(event){
+            if(self.visible){
+                let selected = self.element.querySelector('.'+selected);
+                let children = self.children;
+                if(!selected){
+                    this.choose(0);
+                }else{
+                    let index = children.indexOf(selected);
+                    this.choose(index);
+                }
+            }
+        }
+
         function onKeyup(event){
             activate.call(self, event);
+            if(self.visible){
+                if(event.keyCode === 40){
+                    self.choose(1);
+                }else if(event.keyCode === 38){
+                    self.choose(-1);
+                }
+            }
         }
 
         input.addEventListener('keyup', onKeyup, false);
@@ -79,10 +101,8 @@ class DOMTextAutocomplete {
     }
     show(){
 
-        Array.prototype.slice.call(
-                this.element.children)
-        .forEach(el=>{
-            el = getTarget(el, this.targets);
+        this.forEach(el=>{
+            el = getTarget(el, this.classes);
             if(el.dataset[this.dataKey].indexOf(this.input.value) === 0){
                 el.style.display = this.display;//'block';
             }else{
@@ -91,6 +111,52 @@ class DOMTextAutocomplete {
         });
 
         this.element.style.opacity = 1;
+    }
+    forEach(callback){
+        this.children.forEach(callback);
+    }
+    get children(){
+        return Array.prototype.slice.call(this.element.children);
+    }
+    get visible(){
+        return !!this.element.style.opacity;
+    }
+    choose(direction){
+        console.log('direction ',direction)
+        if([-1, 1].indexOf(direction) === -1){
+            return;
+        }
+
+        let className = this.classes.selected;
+        console.log(className)
+        let selected = this.element.querySelector('.'+className);
+        console.log('selected ',selected)
+        let children = this.children;
+        let index = selected
+        ? children.indexOf(selected) + direction : 0;
+        console.log('index ', index);
+        if(direction === 1){
+            for(let i=index; i<children.length; ++i){
+                console.log('display ',children[i].style.display)
+                if(children[i].style.display !== 'none'){
+                    children[i].classList.add(className);
+                    break;
+                }
+            }
+        }else{
+            for(let i=index; i>=0; --i){
+                console.log('display ',children[i].style.display)
+                if(children[i].style.display !== 'none'){
+                    children[i].classList.add(className);
+                    break;
+                }
+            }
+        }
+
+        if(selected){
+            selected.classList.remove(className);
+        }
+
     }
     hide(){
         this.element.style.opacity = 0;
@@ -104,7 +170,6 @@ class DOMTextAutocomplete {
         return this;
     }
     appendTo(el){
-        console.log('this.element ', this.element)
         el.appendChild(this.element);
         return this;
     }
@@ -120,12 +185,20 @@ export default function autoComplete(input, options){
 }
 
 function getTarget(target, targets){
-    if(matches(target, targets.main)){
+    if(matches(target, '.'+targets.main)){
         return target;
     }
 
-    if(target.children.length && !matches(target, targets.data)){
-        return el.querySelector(targets.data);
+    if(target.children.length && !matches(target, '.'+targets.data)){
+        return el.querySelector('.'+targets.data);
     }
     return target;
+}
+
+function makeSelection(children, className, start){
+    for(let i=start; i<children.length; i++){
+        if(children[i].style.display !== 'none'){
+            children[i].classList.add(className);
+        }
+    }
 }

@@ -5,7 +5,8 @@ try{
         parent: '<ol></ol>',
         children: [
             '<li class="main-target" data-value="thing 1">Thing 1</li>',
-            '<li class="main-target" data-value="thing 2">Thing 2</li>'
+            '<li class="main-target" data-value="thing 2">Thing 2</li>',
+            '<li class="main-target" data-value="thing 3">Thing 3</li>'
         ],
         activate(event){
 
