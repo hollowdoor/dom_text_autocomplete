@@ -1,15 +1,11 @@
 import autoComplete from '../';
 
-console.log('ok')
-
 try{
     const complete = autoComplete(document.querySelector('input'), {
         parent: '<ol></ol>',
-        target: '.thing',
-        
         children: [
-            '<li class="thing" data-value="thing 1">Thing 1</li>',
-            '<li class="thing" data-value="thing 2">Thing 2</li>'
+            '<li class="main-target" data-value="thing 1">Thing 1</li>',
+            '<li class="main-target" data-value="thing 2">Thing 2</li>'
         ],
         activate(event){
 

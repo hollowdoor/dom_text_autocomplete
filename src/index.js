@@ -5,8 +5,10 @@ import camelcase from 'camelcase';
 class DOMTextAutocomplete {
     constructor(input, {
         parent = '<ol></ol>',
+        targets = {},
         target = null,
         dataKey = 'value',
+        display = 'block',
         select = function(value){
             this.input.value = value;
             this.hide();
@@ -17,12 +19,26 @@ class DOMTextAutocomplete {
         children = []
     } = {}){
         const self = this;
-        this.input = typeof input === 'string'
-        ? document.querySelector(input)
-        : input;
 
+        try{
+            this.input = typeof input === 'string'
+            ? document.querySelector(input)
+            : input;
+        }catch(e){
+            throw e;
+        }
+
+        let {
+            main = '.main-target',
+            data = '.value-target'
+        } = (targets || {});
+
+        targets = this.targets = {
+            main, data
+        };
+
+        this.display = display;
         this.dataKey = dataKey;
-
         const dataProp = this.dataProp = camelcase(dataKey);
 
         this.element = toElement(parent);
@@ -42,17 +58,8 @@ class DOMTextAutocomplete {
         function onDown(event){
             if(!down){
                 down = true;
-                if(matches(event.target, target)){
-                    let el = event.target;
-                    console.log('key', dataKey)
-                    console.log('data ',el.dataset[dataKey])
-                    /*if(!el.dataset[dataProp]){
-                        el = el.querySelector('*['+dataKey+']');
-                    }*/
-
-                    let value = el.dataset[dataKey];
-                    select.call(self, value, el);
-                }
+                let el = getTarget(event.target, targets);
+                select.call(self, el.dataset[dataKey], el);
             }
         }
 
@@ -71,27 +78,18 @@ class DOMTextAutocomplete {
         };
     }
     show(){
-        let value = this.input.value,
-            dataProp = this.dataProp,
-            dataKey = this.dataKey,
-            list = Array.prototype.slice.call(
-                this.element.children);
-        console.log(list);
-        list.forEach(el=>{
-            console.log()
-            if(el.dataset[dataKey].indexOf(value) === 0){
-                el.style.display = 'block';
+
+        Array.prototype.slice.call(
+                this.element.children)
+        .forEach(el=>{
+            el = getTarget(el, this.targets);
+            if(el.dataset[this.dataKey].indexOf(this.input.value) === 0){
+                el.style.display = this.display;//'block';
             }else{
                 el.style.display = 'none';
             }
-            /*try{
-                let el = child.querySelector('*['+dataKey+']');
-
-            }catch(e){
-                throw e;
-            }*/
-
         });
+
         this.element.style.opacity = 1;
     }
     hide(){
@@ -119,4 +117,15 @@ class DOMTextAutocomplete {
 
 export default function autoComplete(input, options){
     return new DOMTextAutocomplete(input, options);
+}
+
+function getTarget(target, targets){
+    if(matches(target, targets.main)){
+        return target;
+    }
+
+    if(target.children.length && !matches(target, targets.data)){
+        return el.querySelector(targets.data);
+    }
+    return target;
 }

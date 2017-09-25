@@ -692,8 +692,10 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var this$1 = this;
     if ( ref === void 0 ) { ref = {}; }
     var parent = ref.parent; if ( parent === void 0 ) { parent = '<ol></ol>'; }
+    var targets = ref.targets; if ( targets === void 0 ) { targets = {}; }
     var target = ref.target; if ( target === void 0 ) { target = null; }
     var dataKey = ref.dataKey; if ( dataKey === void 0 ) { dataKey = 'value'; }
+    var display = ref.display; if ( display === void 0 ) { display = 'block'; }
     var select = ref.select; if ( select === void 0 ) { select = function(value){
         this.input.value = value;
         this.hide();
@@ -704,12 +706,25 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var children = ref.children; if ( children === void 0 ) { children = []; }
 
     var self = this;
-    this.input = typeof input === 'string'
-    ? document.querySelector(input)
-    : input;
 
+    try{
+        this.input = typeof input === 'string'
+        ? document.querySelector(input)
+        : input;
+    }catch(e){
+        throw e;
+    }
+
+    var ref$1 = (targets || {});
+    var main = ref$1.main; if ( main === void 0 ) { main = '.main-target'; }
+    var data = ref$1.data; if ( data === void 0 ) { data = '.value-target'; }
+
+    targets = this.targets = {
+        main: main, data: data
+    };
+
+    this.display = display;
     this.dataKey = dataKey;
-
     var dataProp = this.dataProp = camelcase(dataKey);
 
     this.element = toElement(parent);
@@ -729,17 +744,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     function onDown(event){
         if(!down){
             down = true;
-            if(matchesSelector(event.target, target)){
-                var el = event.target;
-                console.log('key', dataKey);
-                console.log('data ',el.dataset[dataKey]);
-                /*if(!el.dataset[dataProp]){
-                    el = el.querySelector('*['+dataKey+']');
-                }*/
-
-                var value = el.dataset[dataKey];
-                select.call(self, value, el);
-            }
+            var el = getTarget(event.target, targets);
+            select.call(self, el.dataset[dataKey], el);
         }
     }
 
@@ -758,27 +764,20 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     };
 };
 DOMTextAutocomplete.prototype.show = function show (){
-    var value = this.input.value,
-        dataProp = this.dataProp,
-        dataKey = this.dataKey,
-        list = Array.prototype.slice.call(
-            this.element.children);
-    console.log(list);
-    list.forEach(function (el){
-        console.log();
-        if(el.dataset[dataKey].indexOf(value) === 0){
-            el.style.display = 'block';
+        var this$1 = this;
+
+
+    Array.prototype.slice.call(
+            this.element.children)
+    .forEach(function (el){
+        el = getTarget(el, this$1.targets);
+        if(el.dataset[this$1.dataKey].indexOf(this$1.input.value) === 0){
+            el.style.display = this$1.display;//'block';
         }else{
             el.style.display = 'none';
         }
-        /*try{
-            let el = child.querySelector('*['+dataKey+']');
-
-        }catch(e){
-            throw e;
-        }*/
-
     });
+
     this.element.style.opacity = 1;
 };
 DOMTextAutocomplete.prototype.hide = function hide (){
@@ -809,16 +808,23 @@ function autoComplete(input, options){
     return new DOMTextAutocomplete(input, options);
 }
 
-console.log('ok');
+function getTarget(target, targets){
+    if(matchesSelector(target, targets.main)){
+        return target;
+    }
+
+    if(target.children.length && !matchesSelector(target, targets.data)){
+        return el.querySelector(targets.data);
+    }
+    return target;
+}
 
 try{
     var complete = autoComplete(document.querySelector('input'), {
         parent: '<ol></ol>',
-        target: '.thing',
-        
         children: [
-            '<li class="thing" data-value="thing 1">Thing 1</li>',
-            '<li class="thing" data-value="thing 2">Thing 2</li>'
+            '<li class="main-target" data-value="thing 1">Thing 1</li>',
+            '<li class="main-target" data-value="thing 2">Thing 2</li>'
         ],
         activate: function activate(event){
 
