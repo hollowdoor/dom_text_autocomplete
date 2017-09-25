@@ -8,19 +8,28 @@ try{
             '<li class="main-target" data-value="thing 2">Thing 2</li>',
             '<li class="main-target" data-value="thing 3">Thing 3</li>'
         ],
-        activate(event){
+        tabbing: /[ ]+/,
+        /*tabbing(value, item){
+            let words1 = values[i].split(' ');
+            let words2 = items[i].split(' ');
 
-                console.log(event.keyCode)
+            for(let i=0; i<words.length; i++){
+                if(words1.indexOf(words2) === 0){
+                    return item;
+                }
+            }
+        },*/
+        activate(event){
+            this.show();
+        },        
+        keyup(event){
             this.show();
         },
         select(value, target){
-            console.log('value ',value)
             this.input.value = value;
             this.hide();
         }
     });
-
-    console.log(complete)
 
     complete.appendTo(document.body);
 

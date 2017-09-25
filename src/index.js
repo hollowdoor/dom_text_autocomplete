@@ -6,7 +6,7 @@ class DOMTextAutocomplete {
     constructor(input, {
         parent = '<ol></ol>',
         classes = {},
-        target = null,
+        tabbing = null,
         dataKey = 'value',
         display = 'block',
         select = function(value){
@@ -38,6 +38,12 @@ class DOMTextAutocomplete {
             main, data, selected
         };
 
+        Object.keys(classes).forEach(clas=>{
+            try{
+                document.querySelector('.'+clas);
+            }catch(e){ throw e; }
+        });
+
         this.display = display;
         this.dataKey = dataKey;
 
@@ -45,6 +51,41 @@ class DOMTextAutocomplete {
 
         this.element = toElement(parent);
         this.element.style.opacity = 0;
+
+        let tabCheck = tabbing, onTab;
+
+        if(tabbing && tabbing !== 'function'){
+            tabCheck = function(value, item){
+                console.log(arguments)
+                let words = value.split(tabbing);
+                let list = item.split(tabbing);
+                let i = 0;
+                for(; i<words.length; i++){
+                    if(words[i].indexOf(list[i]) !== 0){
+                        break;
+                    }
+                }
+                if(i === list.length){
+                    return item;
+                }
+            };
+        }
+
+        if(tabCheck){
+            onTab = function(event){
+                let children = self.children;
+                let value = input.value;
+                for(let i=0; i<children.length; i++){
+                    let current = getTarget(children[i], self.classes);
+                    let result = tabCheck(value, current.dataset[dataProp]);
+                    if(result){
+                        input.value = result;
+                        break;
+                    }
+                }
+                event.preventDefault();
+            };
+        }
 
         function onArrow(event){
             if(self.visible){
@@ -61,6 +102,9 @@ class DOMTextAutocomplete {
 
         function onKeyup(event){
             activate.call(self, event);
+            if(tabbing && event.keyCode === 9){
+                onTab(event);
+            }else
             if(self.visible){
                 if(event.keyCode === 40){
                     self.choose(1);
@@ -70,12 +114,20 @@ class DOMTextAutocomplete {
             }
         }
 
-        input.addEventListener('keyup', onKeyup, false);
-
         children.forEach(child=>this.push(child));
 
-        let down = false, downListener;
+        let down = false;
 
+        function onEnter(event){
+            let key = event.keyCode || event.which;
+            if(self.visible && key === 13){
+                let el = self.element.querySelector('.'+selected);
+                if(el){
+                    select.call(self, el.dataset[dataKey], el);
+                }
+                event.preventDefault();
+            }
+        }
 
         function onDown(event){
             if(!down){
@@ -89,13 +141,16 @@ class DOMTextAutocomplete {
             down = false;
         }
 
-        downListener = onDown;
-
+        document.addEventListener('keyup', onEnter);
+        input.addEventListener('keyup', onKeyup, false);
         this.element.addEventListener('mousedown', onDown, false);
         this.element.addEventListener('mouseup', onUp, false);
 
-
         this.destroy = function(){
+            document.removeEventListener('keyup', onEnter);
+            input.removeEventListener('keyup', onKeyup, false);
+            this.element.removeEventListener('mousedown', onDown, false);
+            this.element.removeEventListener('mouseup', onUp, false);
             this.remove();
         };
     }
@@ -122,22 +177,25 @@ class DOMTextAutocomplete {
         return !!this.element.style.opacity;
     }
     choose(direction){
-        console.log('direction ',direction)
+
         if([-1, 1].indexOf(direction) === -1){
             return;
         }
 
         let className = this.classes.selected;
-        console.log(className)
         let selected = this.element.querySelector('.'+className);
-        console.log('selected ',selected)
         let children = this.children;
         let index = selected
         ? children.indexOf(selected) + direction : 0;
-        console.log('index ', index);
+
+        if(index === children.length){
+            index = 0;
+        }else if(index === -1){
+            index = children.length - 1;
+        }
+
         if(direction === 1){
             for(let i=index; i<children.length; ++i){
-                console.log('display ',children[i].style.display)
                 if(children[i].style.display !== 'none'){
                     children[i].classList.add(className);
                     break;
@@ -145,7 +203,6 @@ class DOMTextAutocomplete {
             }
         }else{
             for(let i=index; i>=0; --i){
-                console.log('display ',children[i].style.display)
                 if(children[i].style.display !== 'none'){
                     children[i].classList.add(className);
                     break;
@@ -156,7 +213,6 @@ class DOMTextAutocomplete {
         if(selected){
             selected.classList.remove(className);
         }
-
     }
     hide(){
         this.element.style.opacity = 0;

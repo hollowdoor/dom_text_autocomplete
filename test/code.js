@@ -693,7 +693,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) { ref = {}; }
     var parent = ref.parent; if ( parent === void 0 ) { parent = '<ol></ol>'; }
     var classes = ref.classes; if ( classes === void 0 ) { classes = {}; }
-    var target = ref.target; if ( target === void 0 ) { target = null; }
+    var tabbing = ref.tabbing; if ( tabbing === void 0 ) { tabbing = null; }
     var dataKey = ref.dataKey; if ( dataKey === void 0 ) { dataKey = 'value'; }
     var display = ref.display; if ( display === void 0 ) { display = 'block'; }
     var select = ref.select; if ( select === void 0 ) { select = function(value){
@@ -724,6 +724,12 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         main: main, data: data, selected: selected
     };
 
+    Object.keys(classes).forEach(function (clas){
+        try{
+            document.querySelector('.'+clas);
+        }catch(e){ throw e; }
+    });
+
     this.display = display;
     this.dataKey = dataKey;
 
@@ -732,8 +738,46 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     this.element = toElement(parent);
     this.element.style.opacity = 0;
 
+    var tabCheck = tabbing, onTab;
+
+    if(tabbing && tabbing !== 'function'){
+        tabCheck = function(value, item){
+            console.log(arguments);
+            var words = value.split(tabbing);
+            var list = item.split(tabbing);
+            var i = 0;
+            for(; i<words.length; i++){
+                if(words[i].indexOf(list[i]) === 0){
+                    break;
+                }
+            }
+            if(i === list.length){
+                return item;
+            }
+        };
+    }
+
+    if(tabCheck){
+        onTab = function(event){
+            var children = self.children;
+            var value = input.value;
+            for(var i=0; i<children.length; i++){
+                var current = getTarget(children[i], self.classes);
+                var result = tabCheck(value, current.dataset[dataProp]);
+                if(result){
+                    input.value = result;
+                    break;
+                }
+            }
+            event.preventDefault();
+        };
+    }
+
     function onKeyup(event){
         activate.call(self, event);
+        if(tabbing && event.keyCode === 9){
+            onTab(event);
+        }else
         if(self.visible){
             if(event.keyCode === 40){
                 self.choose(1);
@@ -743,12 +787,20 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         }
     }
 
-    input.addEventListener('keyup', onKeyup, false);
-
     children.forEach(function (child){ return this$1.push(child); });
 
-    var down = false, downListener;
+    var down = false;
 
+    function onEnter(event){
+        var key = event.keyCode || event.which;
+        if(self.visible && key === 13){
+            var el = self.element.querySelector('.'+selected);
+            if(el){
+                select.call(self, el.dataset[dataKey], el);
+            }
+            event.preventDefault();
+        }
+    }
 
     function onDown(event){
         if(!down){
@@ -762,13 +814,16 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         down = false;
     }
 
-    downListener = onDown;
-
+    document.addEventListener('keyup', onEnter);
+    input.addEventListener('keyup', onKeyup, false);
     this.element.addEventListener('mousedown', onDown, false);
     this.element.addEventListener('mouseup', onUp, false);
 
-
     this.destroy = function(){
+        document.removeEventListener('keyup', onEnter);
+        input.removeEventListener('keyup', onKeyup, false);
+        this.element.removeEventListener('mousedown', onDown, false);
+        this.element.removeEventListener('mouseup', onUp, false);
         this.remove();
     };
 };
@@ -799,22 +854,25 @@ prototypeAccessors.visible.get = function (){
     return !!this.element.style.opacity;
 };
 DOMTextAutocomplete.prototype.choose = function choose (direction){
-    console.log('direction ',direction);
+
     if([-1, 1].indexOf(direction) === -1){
         return;
     }
 
     var className = this.classes.selected;
-    console.log(className);
     var selected = this.element.querySelector('.'+className);
-    console.log('selected ',selected);
     var children = this.children;
     var index = selected
     ? children.indexOf(selected) + direction : 0;
-    console.log('index ', index);
+
+    if(index === children.length){
+        index = 0;
+    }else if(index === -1){
+        index = children.length - 1;
+    }
+
     if(direction === 1){
         for(var i=index; i<children.length; ++i){
-            console.log('display ',children[i].style.display);
             if(children[i].style.display !== 'none'){
                 children[i].classList.add(className);
                 break;
@@ -822,7 +880,6 @@ DOMTextAutocomplete.prototype.choose = function choose (direction){
         }
     }else{
         for(var i$1=index; i$1>=0; --i$1){
-            console.log('display ',children[i$1].style.display);
             if(children[i$1].style.display !== 'none'){
                 children[i$1].classList.add(className);
                 break;
@@ -833,7 +890,6 @@ DOMTextAutocomplete.prototype.choose = function choose (direction){
     if(selected){
         selected.classList.remove(className);
     }
-
 };
 DOMTextAutocomplete.prototype.hide = function hide (){
     this.element.style.opacity = 0;
@@ -883,19 +939,28 @@ try{
             '<li class="main-target" data-value="thing 2">Thing 2</li>',
             '<li class="main-target" data-value="thing 3">Thing 3</li>'
         ],
-        activate: function activate(event){
+        tabbing: /[ ]+/,
+        /*tabbing(value, item){
+            let words1 = values[i].split(' ');
+            let words2 = items[i].split(' ');
 
-                console.log(event.keyCode);
+            for(let i=0; i<words.length; i++){
+                if(words1.indexOf(words2) === 0){
+                    return item;
+                }
+            }
+        },*/
+        activate: function activate(event){
+            this.show();
+        },        
+        keyup: function keyup(event){
             this.show();
         },
         select: function select(value, target){
-            console.log('value ',value);
             this.input.value = value;
             this.hide();
         }
     });
-
-    console.log(complete);
 
     complete.appendTo(document.body);
 
