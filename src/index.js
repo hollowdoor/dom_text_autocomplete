@@ -1,6 +1,8 @@
 import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
+import Searchable from './lib/searchable.js';
+import getTarget from './lib/get_target.js';
 
 class DOMTextAutocomplete {
     constructor(input, {
@@ -28,15 +30,25 @@ class DOMTextAutocomplete {
             throw e;
         }
 
+        this.input.setAttribute('tabindex', '-1');
+
         let {
             main = 'main-target',
             data = 'value-target',
             selected = 'auto-selected'
         } = (classes || {});
 
+
+
         classes = this.classes = {
             main, data, selected
         };
+
+        this.searchable = new Searchable({
+            sep: tabbing,
+            dataKey,
+            classes
+        });
 
         Object.keys(classes).forEach(clas=>{
             try{
@@ -52,39 +64,11 @@ class DOMTextAutocomplete {
         this.element = toElement(parent);
         this.element.style.opacity = 0;
 
-        let tabCheck = tabbing, onTab;
-
-        if(tabbing && tabbing !== 'function'){
-            tabCheck = function(value, item){
-                console.log(arguments)
-                let words = value.split(tabbing);
-                let list = item.split(tabbing);
-                let i = 0;
-                for(; i<words.length; i++){
-                    if(words[i].indexOf(list[i]) !== 0){
-                        break;
-                    }
-                }
-                if(i === list.length){
-                    return item;
-                }
-            };
-        }
-
-        if(tabCheck){
-            onTab = function(event){
-                let children = self.children;
-                let value = input.value;
-                for(let i=0; i<children.length; i++){
-                    let current = getTarget(children[i], self.classes);
-                    let result = tabCheck(value, current.dataset[dataProp]);
-                    if(result){
-                        input.value = result;
-                        break;
-                    }
-                }
-                event.preventDefault();
-            };
+        function onTab(event){
+            let result = self.searchable.find(input.value);
+            if(!result.notFound){
+                input.value = result.value;
+            }
         }
 
         function onArrow(event){
@@ -97,6 +81,12 @@ class DOMTextAutocomplete {
                     let index = children.indexOf(selected);
                     this.choose(index);
                 }
+            }
+        }
+
+        function onKeydown(event){
+            if(event.keyCode === 9){
+                event.preventDefault();
             }
         }
 
@@ -132,7 +122,7 @@ class DOMTextAutocomplete {
         function onDown(event){
             if(!down){
                 down = true;
-                let el = getTarget(event.target, targets);
+                let el = getTarget(event.target, [classes.data]);
                 select.call(self, el.dataset[dataKey], el);
             }
         }
@@ -143,6 +133,7 @@ class DOMTextAutocomplete {
 
         document.addEventListener('keyup', onEnter);
         input.addEventListener('keyup', onKeyup, false);
+        input.addEventListener('keydown', onKeydown, false);
         this.element.addEventListener('mousedown', onDown, false);
         this.element.addEventListener('mouseup', onUp, false);
 
@@ -156,16 +147,26 @@ class DOMTextAutocomplete {
     }
     show(){
 
+        let input = this.input.value.toLowerCase();
+        try{
+            console.log(this.searchable.findAll(this.input.value))
+        }catch(e){ console.error(e)}
+
+        let visible = 0;
         this.forEach(el=>{
-            el = getTarget(el, this.classes);
-            if(el.dataset[this.dataKey].indexOf(this.input.value) === 0){
+            el = getTarget(el, [this.classes.data]);
+            let potential = el.dataset[this.dataKey].toLowerCase();
+            if(potential.indexOf(input) === 0){
+                ++visible;
                 el.style.display = this.display;//'block';
             }else{
                 el.style.display = 'none';
             }
         });
 
-        this.element.style.opacity = 1;
+        if(visible){
+            this.element.style.opacity = 1;
+        }
     }
     forEach(callback){
         this.children.forEach(callback);
@@ -198,6 +199,7 @@ class DOMTextAutocomplete {
             for(let i=index; i<children.length; ++i){
                 if(children[i].style.display !== 'none'){
                     children[i].classList.add(className);
+                    //let target = getTarget(children[i], th)
                     break;
                 }
             }
@@ -218,7 +220,10 @@ class DOMTextAutocomplete {
         this.element.style.opacity = 0;
     }
     push(value){
-        this.element.appendChild(toElement(value));
+        let el = toElement(value);
+        console.log('el ', el);
+        this.element.appendChild(el);
+        this.searchable.push(el);
         return this;
     }
     replace(values){
@@ -240,16 +245,7 @@ export default function autoComplete(input, options){
     return new DOMTextAutocomplete(input, options);
 }
 
-function getTarget(target, targets){
-    if(matches(target, '.'+targets.main)){
-        return target;
-    }
 
-    if(target.children.length && !matches(target, '.'+targets.data)){
-        return el.querySelector('.'+targets.data);
-    }
-    return target;
-}
 
 function makeSelection(children, className, start){
     for(let i=start; i<children.length; i++){

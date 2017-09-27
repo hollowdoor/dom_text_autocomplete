@@ -2,6 +2,147 @@ import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
 
+function getTarget(target, targets){
+    if ( targets === void 0 ) targets = [];
+
+
+    for(var i=0; i<targets.length; i++){
+        if(matches(target, '.'+targets[i])){
+            return target;
+        }
+
+        if(target.children.length){
+            var el = target.querySelector('.'+targets[i]);
+            if(el) { return el; }
+        }
+    }
+
+    return null;
+}
+
+/*export default function getTarget(target, targets){
+    if(matches(target, '.'+targets.main)){
+        return target;
+    }
+
+    if(target.children.length && !matches(target, '.'+targets.data)){
+        return target.querySelector('.'+targets.data);
+    }
+    return target;
+}*/
+
+var Searchable = function Searchable(ref){
+    if ( ref === void 0 ) ref = {};
+    var classes = ref.classes; if ( classes === void 0 ) classes = {};
+    var dataKey = ref.dataKey; if ( dataKey === void 0 ) dataKey = 'value';
+    var sep = ref.sep; if ( sep === void 0 ) sep = ' ';
+
+
+    var main = classes.main;
+    var data = classes.data;
+
+    this.classes = {main: main, data: data};
+    this.dataProp = camelcase(dataKey);
+    this.dataKey = dataKey;
+    this.tree = {};
+    this.sep = ' ';
+};
+Searchable.prototype.push = function push (element){
+    var src = getTarget(element, [this.classes.data]);
+    var value = src.dataset[this.dataProp];
+    var list = value.split(this.sep);
+    var next = this.tree;
+    list.forEach(function (item){
+        next[item] = next[item] || {};
+        next = next[item];
+    });
+
+    next.elements = next.elements || [];
+    next.leaf = true;
+    next.value = value;
+    next.elements.push(element);
+};
+Searchable.prototype.find = function find (value){
+        var this$1 = this;
+
+    var list = value.split(this.sep);
+    var next = this.tree, last;
+    var potential;
+
+    var result = [];
+
+    for(var i=0; i<list.length; i++){
+        last = next;
+        next = next[list[i]];
+        if(next !== void 0){
+            result.push(list[i]);
+        }
+
+        if(next === void 0 && last){
+            potential = list[i].toLowerCase();
+            var keys = Object.keys(last);
+            for(var j=0; j<keys.length; j++){
+                var key = keys[j].toLowerCase();
+                if(key === potential || key.indexOf(potential) === 0){
+                    result.push(keys[j]);
+
+                    return {
+                        value: result.join(this$1.sep),
+
+                    };
+                }
+            }
+        }
+    }
+
+    if(next && next.end) { return next; }
+    return {notFound: true};
+};
+Searchable.prototype.findAll = function findAll (value){
+    var list = value.split(this.sep);
+    var next = this.tree, last;
+    var potential;
+
+    var result = [], results = [];
+
+    for(var i=0; i<list.length; i++){
+        last = next;
+        next = next[list[i]];
+        if(next !== void 0){
+            result.push(list[i]);
+        }
+
+        if(next === void 0 && last){
+            potential = list[i].toLowerCase();
+            var keys = Object.keys(last);
+            var results$1 = [];
+            for(var j=0; j<keys.length; j++){
+                var key = keys[j].toLowerCase();
+                if(key === potential || key.indexOf(potential) === 0){
+                    toLeaves(last[keys[j]], results$1);
+                }
+            }
+            return results$1;
+        }
+    }
+};
+
+function toLeaves(tree, results){
+    if ( results === void 0 ) results = [];
+
+    var keys = Object.keys(tree);
+    for(var i=0; i<keys.length; i++){
+        if(tree[keys[i]].leaf){
+            results.push(tree[keys[i]]);
+        }else{
+            toLeaves(tree[keys[i]], results);
+        }        
+
+    }
+
+    return results;
+}
+
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var this$1 = this;
     if ( ref === void 0 ) ref = {};
@@ -29,14 +170,24 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         throw e;
     }
 
+    this.input.setAttribute('tabindex', '-1');
+
     var ref$1 = (classes || {});
     var main = ref$1.main; if ( main === void 0 ) main = 'main-target';
     var data = ref$1.data; if ( data === void 0 ) data = 'value-target';
     var selected = ref$1.selected; if ( selected === void 0 ) selected = 'auto-selected';
 
+
+
     classes = this.classes = {
         main: main, data: data, selected: selected
     };
+
+    this.searchable = new Searchable({
+        sep: tabbing,
+        dataKey: dataKey,
+        classes: classes
+    });
 
     Object.keys(classes).forEach(function (clas){
         try{
@@ -52,39 +203,17 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     this.element = toElement(parent);
     this.element.style.opacity = 0;
 
-    var tabCheck = tabbing, onTab;
-
-    if(tabbing && tabbing !== 'function'){
-        tabCheck = function(value, item){
-            console.log(arguments);
-            var words = value.split(tabbing);
-            var list = item.split(tabbing);
-            var i = 0;
-            for(; i<words.length; i++){
-                if(words[i].indexOf(list[i]) === 0){
-                    break;
-                }
-            }
-            if(i === list.length){
-                return item;
-            }
-        };
+    function onTab(event){
+        var result = self.searchable.find(input.value);
+        if(!result.notFound){
+            input.value = result.value;
+        }
     }
 
-    if(tabCheck){
-        onTab = function(event){
-            var children = self.children;
-            var value = input.value;
-            for(var i=0; i<children.length; i++){
-                var current = getTarget(children[i], self.classes);
-                var result = tabCheck(value, current.dataset[dataProp]);
-                if(result){
-                    input.value = result;
-                    break;
-                }
-            }
+    function onKeydown(event){
+        if(event.keyCode === 9){
             event.preventDefault();
-        };
+        }
     }
 
     function onKeyup(event){
@@ -119,7 +248,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     function onDown(event){
         if(!down){
             down = true;
-            var el = getTarget(event.target, targets);
+            var el = getTarget(event.target, [classes.data]);
             select.call(self, el.dataset[dataKey], el);
         }
     }
@@ -130,6 +259,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     document.addEventListener('keyup', onEnter);
     input.addEventListener('keyup', onKeyup, false);
+    input.addEventListener('keydown', onKeydown, false);
     this.element.addEventListener('mousedown', onDown, false);
     this.element.addEventListener('mouseup', onUp, false);
 
@@ -147,16 +277,26 @@ DOMTextAutocomplete.prototype.show = function show (){
         var this$1 = this;
 
 
+    var input = this.input.value.toLowerCase();
+    try{
+        console.log(this.searchable.findAll(this.input.value));
+    }catch(e){ console.error(e);}
+
+    var visible = 0;
     this.forEach(function (el){
-        el = getTarget(el, this$1.classes);
-        if(el.dataset[this$1.dataKey].indexOf(this$1.input.value) === 0){
+        el = getTarget(el, [this$1.classes.data]);
+        var potential = el.dataset[this$1.dataKey].toLowerCase();
+        if(potential.indexOf(input) === 0){
+            ++visible;
             el.style.display = this$1.display;//'block';
         }else{
             el.style.display = 'none';
         }
     });
 
-    this.element.style.opacity = 1;
+    if(visible){
+        this.element.style.opacity = 1;
+    }
 };
 DOMTextAutocomplete.prototype.forEach = function forEach (callback){
     this.children.forEach(callback);
@@ -189,6 +329,7 @@ DOMTextAutocomplete.prototype.choose = function choose (direction){
         for(var i=index; i<children.length; ++i){
             if(children[i].style.display !== 'none'){
                 children[i].classList.add(className);
+                //let target = getTarget(children[i], th)
                 break;
             }
         }
@@ -209,7 +350,10 @@ DOMTextAutocomplete.prototype.hide = function hide (){
     this.element.style.opacity = 0;
 };
 DOMTextAutocomplete.prototype.push = function push (value){
-    this.element.appendChild(toElement(value));
+    var el = toElement(value);
+    console.log('el ', el);
+    this.element.appendChild(el);
+    this.searchable.push(el);
     return this;
 };
 DOMTextAutocomplete.prototype.replace = function replace (values){
@@ -232,17 +376,6 @@ Object.defineProperties( DOMTextAutocomplete.prototype, prototypeAccessors );
 
 function autoComplete(input, options){
     return new DOMTextAutocomplete(input, options);
-}
-
-function getTarget(target, targets){
-    if(matches(target, '.'+targets.main)){
-        return target;
-    }
-
-    if(target.children.length && !matches(target, '.'+targets.data)){
-        return el.querySelector('.'+targets.data);
-    }
-    return target;
 }
 
 export default autoComplete;
