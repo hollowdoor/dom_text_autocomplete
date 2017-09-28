@@ -280,6 +280,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         if(self.showing && key === 13){
             var el = self.element.querySelector('.'+selected);
             if(el){
+                el.classList.remove(selected);
                 select.call(self, el.dataset[dataKey], el);
             }
             event.preventDefault();
