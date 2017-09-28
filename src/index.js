@@ -3,6 +3,7 @@ import matches from 'matches-selector';
 import camelcase from 'camelcase';
 import Searchable from './lib/searchable.js';
 import getTarget from './lib/get_target.js';
+import { noKeyDown } from './lib/data.js';
 
 class DOMTextAutocomplete {
     constructor(input, {
@@ -65,6 +66,8 @@ class DOMTextAutocomplete {
         this.element = toElement(parent);
         this.element.style.opacity = 0;
 
+
+
         function run(event){
             //Debounce the dropdown activation
             clearTimeout(keyTimer);
@@ -102,7 +105,7 @@ class DOMTextAutocomplete {
 
         function onKeyup(event){
             let keyCode = event.which || event.keyCode;
-            if(keyCode !== 13){
+            if(noKeyDown.indexOf(keyCode) === -1){
                 run(event);
             }
             if(keyCode === 9){

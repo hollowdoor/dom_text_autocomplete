@@ -181,6 +181,8 @@ function toLeaves(tree, results, depthLimit){
     return results;
 }
 
+var noKeyDown = [9, 13, 38, 40];
+
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) ref = {};
     var parent = ref.parent; if ( parent === void 0 ) parent = '<ol></ol>';
@@ -241,6 +243,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     this.element = domElementals.toElement(parent);
     this.element.style.opacity = 0;
 
+
+
     function run(event){
         //Debounce the dropdown activation
         clearTimeout(keyTimer);
@@ -253,7 +257,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         var result = self.searchable.match(input.value);
         if(!result.notFound){
             input.value = result.value;
-
             run(event);
         }
     }
@@ -266,7 +269,10 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     function onKeyup(event){
         var keyCode = event.which || event.keyCode;
-        if(keyCode !== 13){
+        /*if(keyCode !== 13){
+            run(event);
+        }*/
+        if(noKeyDown.indexOf(keyCode) === -1){
             run(event);
         }
         if(keyCode === 9){
