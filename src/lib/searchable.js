@@ -5,7 +5,7 @@ export default class Searchable {
     constructor({
         classes = {},
         dataKey = 'value',
-        sep = ' '
+        separator = '[ ]+'
     } = {}){
 
         let { main, data } = classes;
@@ -14,7 +14,7 @@ export default class Searchable {
         this.dataProp = camelcase(dataKey);
         this.dataKey = dataKey;
         this.tree = {branches: {}};
-        this.sep = ' ';
+        this.sep = new RegExp(separator);
     }
     push(element){
         let src = getTarget(element, [this.classes.data]);

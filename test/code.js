@@ -721,7 +721,7 @@ var Searchable = function Searchable(ref){
     if ( ref === void 0 ) { ref = {}; }
     var classes = ref.classes; if ( classes === void 0 ) { classes = {}; }
     var dataKey = ref.dataKey; if ( dataKey === void 0 ) { dataKey = 'value'; }
-    var sep = ref.sep; if ( sep === void 0 ) { sep = ' '; }
+    var separator = ref.separator; if ( separator === void 0 ) { separator = '[ ]+'; }
 
 
     var main = classes.main;
@@ -731,7 +731,7 @@ var Searchable = function Searchable(ref){
     this.dataProp = camelcase(dataKey);
     this.dataKey = dataKey;
     this.tree = {branches: {}};
-    this.sep = ' ';
+    this.sep = new RegExp(separator);
 };
 Searchable.prototype.push = function push (element){
     var src = getTarget(element, [this.classes.data]);
@@ -874,7 +874,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) { ref = {}; }
     var parent = ref.parent; if ( parent === void 0 ) { parent = '<ol></ol>'; }
     var classes = ref.classes; if ( classes === void 0 ) { classes = {}; }
-    var tabbing = ref.tabbing; if ( tabbing === void 0 ) { tabbing = null; }
+    var separator = ref.separator; if ( separator === void 0 ) { separator = '[ ]+'; }
     var dataKey = ref.dataKey; if ( dataKey === void 0 ) { dataKey = 'value'; }
     var display = ref.display; if ( display === void 0 ) { display = 'block'; }
     var select = ref.select; if ( select === void 0 ) { select = function(value){
@@ -908,7 +908,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     };
 
     this.searchable = new Searchable({
-        sep: tabbing,
+        separator: separator,
         dataKey: dataKey,
         classes: classes
     });
@@ -1133,17 +1133,7 @@ try{
             '<li class="main-target value-target" data-value="Legend of Sleepy Hollow">Legend of Sleepy Hollow</li>',
             '<li class="main-target value-target" data-value="The Shining">The Shining</li>'
         ],
-        tabbing: /[ ]+/,
-        /*tabbing(value, item){
-            let words1 = values[i].split(' ');
-            let words2 = items[i].split(' ');
-
-            for(let i=0; i<words.length; i++){
-                if(words1.indexOf(words2) === 0){
-                    return item;
-                }
-            }
-        },*/
+        separator: '[ ]+',
         activate: function activate(event){
             this.show();
         },

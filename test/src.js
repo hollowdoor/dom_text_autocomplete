@@ -9,17 +9,7 @@ try{
             '<li class="main-target value-target" data-value="Legend of Sleepy Hollow">Legend of Sleepy Hollow</li>',
             '<li class="main-target value-target" data-value="The Shining">The Shining</li>'
         ],
-        tabbing: /[ ]+/,
-        /*tabbing(value, item){
-            let words1 = values[i].split(' ');
-            let words2 = items[i].split(' ');
-
-            for(let i=0; i<words.length; i++){
-                if(words1.indexOf(words2) === 0){
-                    return item;
-                }
-            }
-        },*/
+        separator: '[ ]+',
         activate(event){
             this.show();
         },

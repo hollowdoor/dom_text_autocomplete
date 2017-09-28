@@ -8,7 +8,7 @@ class DOMTextAutocomplete {
     constructor(input, {
         parent = '<ol></ol>',
         classes = {},
-        tabbing = null,
+        separator = '[ ]+',
         dataKey = 'value',
         display = 'block',
         select = function(value){
@@ -43,7 +43,7 @@ class DOMTextAutocomplete {
         };
 
         this.searchable = new Searchable({
-            sep: tabbing,
+            separator,
             dataKey,
             classes
         });
