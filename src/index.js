@@ -64,7 +64,7 @@ class DOMTextAutocomplete {
         this.element.style.opacity = 0;
 
         function onTab(event){
-            let result = self.searchable.find(input.value);
+            let result = self.searchable.match(input.value);
             if(!result.notFound){
                 input.value = result.value;
                 activate.call(self, event);

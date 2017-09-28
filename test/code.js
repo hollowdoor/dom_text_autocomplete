@@ -755,7 +755,7 @@ Searchable.prototype.push = function push (element){
     next.value = value;
     next.elements.push(element);
 };
-Searchable.prototype.find = function find (value){
+Searchable.prototype.match = function match (value){
         var this$1 = this;
 
     var list = value.split(this.sep)
@@ -929,7 +929,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     this.element.style.opacity = 0;
 
     function onTab(event){
-        var result = self.searchable.find(input.value);
+        var result = self.searchable.match(input.value);
         if(!result.notFound){
             input.value = result.value;
             activate.call(self, event);

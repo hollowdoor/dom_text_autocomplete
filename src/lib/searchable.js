@@ -38,7 +38,7 @@ export default class Searchable {
         next.value = value;
         next.elements.push(element);
     }
-    find(value){
+    match(value){
         let list = value.split(this.sep)
         .filter(v=>v.length)
         .map(v=>v.toLowerCase());
