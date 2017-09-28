@@ -184,7 +184,6 @@ function toLeaves(tree, results, depthLimit){
 }
 
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
-    var this$1 = this;
     if ( ref === void 0 ) ref = {};
     var parent = ref.parent; if ( parent === void 0 ) parent = '<ol></ol>';
     var classes = ref.classes; if ( classes === void 0 ) classes = {};
@@ -271,7 +270,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         }
     }
 
-    children.forEach(function (child){ return this$1.push(child); });
+    //children.forEach(child=>this.push(child));
+    (ref$2 = this).push.apply(ref$2, children);
 
     var down = false;
 
@@ -312,6 +312,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         this.element.removeEventListener('mouseup', onUp, false);
         this.remove();
     };
+    var ref$2;
 };
 
 var prototypeAccessors = { children: {},showing: {} };
@@ -408,12 +409,18 @@ DOMTextAutocomplete.prototype.choose = function choose (direction){
 DOMTextAutocomplete.prototype.hide = function hide (){
     this.element.style.opacity = 0;
 };
-DOMTextAutocomplete.prototype.push = function push (value){
-    var el = toElement(value);
-    //console.log('el ', el);
-    this.element.appendChild(el);
-    this.searchable.push(el);
-    el.style.display = 'none';
+DOMTextAutocomplete.prototype.push = function push (){
+        var this$1 = this;
+        var values = [], len = arguments.length;
+        while ( len-- ) values[ len ] = arguments[ len ];
+
+    values.forEach(function (value){
+        var el = toElement(value);
+        //console.log('el ', el);
+        this$1.element.appendChild(el);
+        this$1.searchable.push(el);
+        el.style.display = 'none';
+    });
     return this;
 };
 DOMTextAutocomplete.prototype.replace = function replace (values){

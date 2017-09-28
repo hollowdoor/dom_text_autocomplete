@@ -105,7 +105,8 @@ class DOMTextAutocomplete {
             }
         }
 
-        children.forEach(child=>this.push(child));
+        //children.forEach(child=>this.push(child));
+        this.push(...children);
 
         let down = false;
 
@@ -238,12 +239,14 @@ class DOMTextAutocomplete {
     hide(){
         this.element.style.opacity = 0;
     }
-    push(value){
-        let el = toElement(value);
-        //console.log('el ', el);
-        this.element.appendChild(el);
-        this.searchable.push(el);
-        el.style.display = 'none';
+    push(...values){
+        values.forEach(value=>{
+            let el = toElement(value);
+            //console.log('el ', el);
+            this.element.appendChild(el);
+            this.searchable.push(el);
+            el.style.display = 'none';
+        });
         return this;
     }
     replace(values){
