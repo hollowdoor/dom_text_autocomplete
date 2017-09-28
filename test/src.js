@@ -22,6 +22,8 @@ try{
         }
     });
 
+    complete.input.focus();
+
     complete.appendTo(document.body);
 
 }catch(e){
