@@ -91,15 +91,16 @@ class DOMTextAutocomplete {
         }
 
         function onKeyup(event){
-            activate.call(self, event);
-            if(event.keyCode === 9){
+            let keyCode = event.which || event.keyCode;
+            if(keyCode !== 13) activate.call(self, event);
+            if(keyCode === 9){
                 onTab(event);
             }else
 
             if(self.showing){
-                if(event.keyCode === 40){
+                if(keyCode === 40){
                     self.choose(1);
-                }else if(event.keyCode === 38){
+                }else if(keyCode === 38){
                     self.choose(-1);
                 }
             }
@@ -110,14 +111,14 @@ class DOMTextAutocomplete {
         let down = false;
 
         function onEnter(event){
-            let key = event.keyCode || event.which;
+            let key = event.which || event.keyCode;
             if(self.showing && key === 13){
                 let el = self.element.querySelector('.'+selected);
                 if(el){
                     el.classList.remove(selected);
                     select.call(self, el.dataset[dataKey], el);
+                    event.preventDefault();
                 }
-                event.preventDefault();
             }
         }
 
