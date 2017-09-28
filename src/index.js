@@ -38,8 +38,6 @@ class DOMTextAutocomplete {
             selected = 'auto-selected'
         } = (classes || {});
 
-
-
         classes = this.classes = {
             main, data, selected
         };
@@ -58,6 +56,7 @@ class DOMTextAutocomplete {
 
         this.display = display;
         this.dataKey = dataKey;
+        this.visible = [];
 
         const dataProp = this.dataProp = camelcase(dataKey);
 
@@ -68,11 +67,12 @@ class DOMTextAutocomplete {
             let result = self.searchable.find(input.value);
             if(!result.notFound){
                 input.value = result.value;
+                activate.call(self, event);
             }
         }
 
         function onArrow(event){
-            if(self.visible){
+            if(self.showing){
                 let selected = self.element.querySelector('.'+selected);
                 let children = self.children;
                 if(!selected){
@@ -92,10 +92,11 @@ class DOMTextAutocomplete {
 
         function onKeyup(event){
             activate.call(self, event);
-            if(tabbing && event.keyCode === 9){
+            if(event.keyCode === 9){
                 onTab(event);
             }else
-            if(self.visible){
+
+            if(self.showing){
                 if(event.keyCode === 40){
                     self.choose(1);
                 }else if(event.keyCode === 38){
@@ -110,7 +111,7 @@ class DOMTextAutocomplete {
 
         function onEnter(event){
             let key = event.keyCode || event.which;
-            if(self.visible && key === 13){
+            if(self.showing && key === 13){
                 let el = self.element.querySelector('.'+selected);
                 if(el){
                     select.call(self, el.dataset[dataKey], el);
@@ -149,10 +150,27 @@ class DOMTextAutocomplete {
 
         let input = this.input.value.toLowerCase();
         try{
-            console.log(this.searchable.findAll(this.input.value))
+            let found = this.searchable.findAll(this.input.value);
+            console.log('found ',found);
+
+            this.visible.forEach(el=>{
+                el.style.display = 'none';
+            });
+            this.visible = [];
+            found.forEach(item=>{
+                //console.log('item', item)
+                item.elements.forEach(el=>{
+                    el.style.display = this.display;
+                    this.visible.push(el);
+                });
+            });
+
+            if(this.visible.length){
+                this.element.style.opacity = 1;
+            }
         }catch(e){ console.error(e)}
 
-        let visible = 0;
+        /*let visible = 0;
         this.forEach(el=>{
             el = getTarget(el, [this.classes.data]);
             let potential = el.dataset[this.dataKey].toLowerCase();
@@ -166,7 +184,7 @@ class DOMTextAutocomplete {
 
         if(visible){
             this.element.style.opacity = 1;
-        }
+        }*/
     }
     forEach(callback){
         this.children.forEach(callback);
@@ -174,7 +192,7 @@ class DOMTextAutocomplete {
     get children(){
         return Array.prototype.slice.call(this.element.children);
     }
-    get visible(){
+    get showing(){
         return !!this.element.style.opacity;
     }
     choose(direction){
@@ -221,9 +239,10 @@ class DOMTextAutocomplete {
     }
     push(value){
         let el = toElement(value);
-        console.log('el ', el);
+        //console.log('el ', el);
         this.element.appendChild(el);
         this.searchable.push(el);
+        el.style.display = 'none';
         return this;
     }
     replace(values){

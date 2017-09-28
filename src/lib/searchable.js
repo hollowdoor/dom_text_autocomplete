@@ -13,17 +13,24 @@ export default class Searchable {
         this.classes = {main, data};
         this.dataProp = camelcase(dataKey);
         this.dataKey = dataKey;
-        this.tree = {};
+        this.tree = {branches: {}};
         this.sep = ' ';
     }
     push(element){
         let src = getTarget(element, [this.classes.data]);
         let value = src.dataset[this.dataProp];
         let list = value.split(this.sep);
-        let next = this.tree;
+        let current = this.tree;
+        let next = current;
         list.forEach(item=>{
-            next[item] = next[item] || {};
-            next = next[item];
+            let key = item.toLowerCase();
+            //next = next || {branches: {}};
+            next = (next.branches[key] = next.branches[key] || {});
+            next.branches = next.branches || {};
+            next.value = item;
+            //next = current[item] = current[item] || {};
+            //current[item].branches = current[item].branches || {};
+            //current = current[item].branches;
         });
 
         next.elements = next.elements || [];
@@ -32,29 +39,40 @@ export default class Searchable {
         next.elements.push(element);
     }
     find(value){
-        let list = value.split(this.sep);
+        let list = value.split(this.sep)
+        .filter(v=>v.length)
+        .map(v=>v.toLowerCase());
+
         let next = this.tree, last;
-        let potential;
 
         let result = [];
 
-        for(let i=0; i<list.length; i++){
-            last = next;
-            next = next[list[i]];
-            if(next !== void 0){
-                result.push(list[i]);
+        for(let i=0; i<list.length; ++i){
+            if(next){
+                last = next;
+                next = next.branches[list[i]] || false;
+
+                if(next){
+                    result.push(next.value);
+                }
             }
 
-            if(next === void 0 && last){
-                potential = list[i].toLowerCase();
-                let keys = Object.keys(last);
+            if(!next && last){
+                let potential = list[i];
+                let keys = Object.keys(last.branches);
                 for(let j=0; j<keys.length; j++){
-                    let key = keys[j].toLowerCase();
+
+                    let key = keys[j];
                     if(key === potential || key.indexOf(potential) === 0){
-                        result.push(keys[j]);
+                        if(last.branches[key].leaf){
+                            result = last.branches[key].value;
+                        }else{
+                            result.push(last.branches[key].value);
+                            result = result.join(this.sep);
+                        }
 
                         return {
-                            value: result.join(this.sep),
+                            value: result
 
                         };
                     }
@@ -62,47 +80,69 @@ export default class Searchable {
             }
         }
 
-        if(next && next.end) return next;
+        //if(next && next.end) return next;
         return {notFound: true};
     }
     findAll(value){
-        let list = value.split(this.sep);
-        let next = this.tree, last;
-        let potential;
 
-        let result = [], results = [];
+        let list = value.split(this.sep)
+        .filter(v=>v.length)
+        .map(v=>v.toLowerCase());
 
-        for(let i=0; i<list.length; i++){
-            last = next;
-            next = next[list[i]];
-            if(next !== void 0){
-                result.push(list[i]);
+        let next = this.tree, last, results = [];
+
+        if(!list.length){
+            return [];
+        }
+
+        for(let i=0; i<list.length; ++i){
+
+            if(next && next.branches){
+                last = next;
+                next = next.branches[list[i]] || false;
             }
 
-            if(next === void 0 && last){
-                potential = list[i].toLowerCase();
-                let keys = Object.keys(last);
-                let results = [];
-                for(let j=0; j<keys.length; j++){
-                    let key = keys[j].toLowerCase();
+            if(next && i + 1 === list.length){
+                toLeaves(next, results);
+            }else
+
+            if(!next){
+                let potential = list[i];
+                let keys = Object.keys(last.branches);
+                for(let j=0; j<keys.length; ++j){
+                    //console.log('keys[j] ',keys[j]);
+                    let key = keys[j];
                     if(key === potential || key.indexOf(potential) === 0){
-                        toLeaves(last[keys[j]], results);
+                        toLeaves(last.branches[keys[j]], results);
                     }
                 }
-                return results;
             }
         }
+
+        return results;
     }
 }
 
-function toLeaves(tree, results = []){
-    let keys = Object.keys(tree);
-    for(let i=0; i<keys.length; i++){
-        if(tree[keys[i]].leaf){
-            results.push(tree[keys[i]]);
-        }else{
-            toLeaves(tree[keys[i]], results);
+function toLeaves(tree, results = [], depthLimit = 400){
+
+    if(tree !== void 0){
+
+        if(tree.leaf){
+            results.push(tree);
         }
+
+        let keys = Object.keys(tree.branches);
+
+        for(let i=0; i<keys.length; i++){
+            let current = tree.branches[keys[i]];
+
+            if(current.leaf){
+                results.push(current);
+            }
+
+            toLeaves(current, results, depthLimit);
+        }
+
     }
 
     return results;
