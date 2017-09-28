@@ -24,13 +24,9 @@ export default class Searchable {
         let next = current;
         list.forEach(item=>{
             let key = item.toLowerCase();
-            //next = next || {branches: {}};
             next = (next.branches[key] = next.branches[key] || {});
             next.branches = next.branches || {};
             next.value = item;
-            //next = current[item] = current[item] || {};
-            //current[item].branches = current[item].branches || {};
-            //current = current[item].branches;
         });
 
         next.elements = next.elements || [];
@@ -80,7 +76,6 @@ export default class Searchable {
             }
         }
 
-        //if(next && next.end) return next;
         return {notFound: true};
     }
     findAll(value){
@@ -110,7 +105,6 @@ export default class Searchable {
                 let potential = list[i];
                 let keys = Object.keys(last.branches);
                 for(let j=0; j<keys.length; ++j){
-                    //console.log('keys[j] ',keys[j]);
                     let key = keys[j];
                     if(key === potential || key.indexOf(potential) === 0){
                         toLeaves(last.branches[keys[j]], results);

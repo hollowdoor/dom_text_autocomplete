@@ -105,7 +105,6 @@ class DOMTextAutocomplete {
             }
         }
 
-        //children.forEach(child=>this.push(child));
         this.push(...children);
 
         let down = false;
@@ -153,14 +152,12 @@ class DOMTextAutocomplete {
         let input = this.input.value.toLowerCase();
         try{
             let found = this.searchable.findAll(this.input.value);
-            console.log('found ',found);
 
             this.visible.forEach(el=>{
                 el.style.display = 'none';
             });
             this.visible = [];
             found.forEach(item=>{
-                //console.log('item', item)
                 item.elements.forEach(el=>{
                     el.style.display = this.display;
                     this.visible.push(el);
@@ -171,22 +168,6 @@ class DOMTextAutocomplete {
                 this.element.style.opacity = 1;
             }
         }catch(e){ console.error(e)}
-
-        /*let visible = 0;
-        this.forEach(el=>{
-            el = getTarget(el, [this.classes.data]);
-            let potential = el.dataset[this.dataKey].toLowerCase();
-            if(potential.indexOf(input) === 0){
-                ++visible;
-                el.style.display = this.display;//'block';
-            }else{
-                el.style.display = 'none';
-            }
-        });
-
-        if(visible){
-            this.element.style.opacity = 1;
-        }*/
     }
     forEach(callback){
         this.children.forEach(callback);
@@ -219,7 +200,6 @@ class DOMTextAutocomplete {
             for(let i=index; i<children.length; ++i){
                 if(children[i].style.display !== 'none'){
                     children[i].classList.add(className);
-                    //let target = getTarget(children[i], th)
                     break;
                 }
             }
@@ -242,7 +222,6 @@ class DOMTextAutocomplete {
     push(...values){
         values.forEach(value=>{
             let el = toElement(value);
-            //console.log('el ', el);
             this.element.appendChild(el);
             this.searchable.push(el);
             el.style.display = 'none';

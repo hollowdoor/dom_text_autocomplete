@@ -741,13 +741,9 @@ Searchable.prototype.push = function push (element){
     var next = current;
     list.forEach(function (item){
         var key = item.toLowerCase();
-        //next = next || {branches: {}};
         next = (next.branches[key] = next.branches[key] || {});
         next.branches = next.branches || {};
         next.value = item;
-        //next = current[item] = current[item] || {};
-        //current[item].branches = current[item].branches || {};
-        //current = current[item].branches;
     });
 
     next.elements = next.elements || [];
@@ -799,7 +795,6 @@ Searchable.prototype.match = function match (value){
         }
     }
 
-    //if(next && next.end) return next;
     return {notFound: true};
 };
 Searchable.prototype.findAll = function findAll (value){
@@ -829,7 +824,6 @@ Searchable.prototype.findAll = function findAll (value){
             var potential = list[i];
             var keys = Object.keys(last.branches);
             for(var j=0; j<keys.length; ++j){
-                //console.log('keys[j] ',keys[j]);
                 var key = keys[j];
                 if(key === potential || key.indexOf(potential) === 0){
                     toLeaves(last.branches[keys[j]], results);
@@ -956,7 +950,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         }
     }
 
-    //children.forEach(child=>this.push(child));
     (ref$2 = this).push.apply(ref$2, children);
 
     var down = false;
@@ -1009,14 +1002,12 @@ DOMTextAutocomplete.prototype.show = function show (){
     var input = this.input.value.toLowerCase();
     try{
         var found = this.searchable.findAll(this.input.value);
-        console.log('found ',found);
 
         this.visible.forEach(function (el){
             el.style.display = 'none';
         });
         this.visible = [];
         found.forEach(function (item){
-            //console.log('item', item)
             item.elements.forEach(function (el){
                 el.style.display = this$1.display;
                 this$1.visible.push(el);
@@ -1027,22 +1018,6 @@ DOMTextAutocomplete.prototype.show = function show (){
             this.element.style.opacity = 1;
         }
     }catch(e){ console.error(e);}
-
-    /*let visible = 0;
-    this.forEach(el=>{
-        el = getTarget(el, [this.classes.data]);
-        let potential = el.dataset[this.dataKey].toLowerCase();
-        if(potential.indexOf(input) === 0){
-            ++visible;
-            el.style.display = this.display;//'block';
-        }else{
-            el.style.display = 'none';
-        }
-    });
-
-    if(visible){
-        this.element.style.opacity = 1;
-    }*/
 };
 DOMTextAutocomplete.prototype.forEach = function forEach (callback){
     this.children.forEach(callback);
@@ -1075,7 +1050,6 @@ DOMTextAutocomplete.prototype.choose = function choose (direction){
         for(var i=index; i<children.length; ++i){
             if(children[i].style.display !== 'none'){
                 children[i].classList.add(className);
-                //let target = getTarget(children[i], th)
                 break;
             }
         }
@@ -1104,7 +1078,6 @@ DOMTextAutocomplete.prototype.push = function push (){
 
     values.forEach(function (value){
         var el = toElement(value);
-        //console.log('el ', el);
         this$1.element.appendChild(el);
         this$1.searchable.push(el);
         el.style.display = 'none';
