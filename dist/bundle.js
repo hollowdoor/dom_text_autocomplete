@@ -214,6 +214,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var data = ref$1.data; if ( data === void 0 ) data = 'value-target';
     var selected = ref$1.selected; if ( selected === void 0 ) selected = 'auto-selected';
 
+    var keyTimer;
+
     classes = this.classes = {
         main: main, data: data, selected: selected
     };
@@ -239,11 +241,20 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     this.element = domElementals.toElement(parent);
     this.element.style.opacity = 0;
 
+    function run(event){
+        //Debounce the dropdown activation
+        clearTimeout(keyTimer);
+        keyTimer = setTimeout(function (){
+            activate.call(self, event);
+        }, 100);
+    }
+
     function onTab(event){
         var result = self.searchable.match(input.value);
         if(!result.notFound){
             input.value = result.value;
-            activate.call(self, event);
+
+            run(event);
         }
     }
 
@@ -255,7 +266,9 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     function onKeyup(event){
         var keyCode = event.which || event.keyCode;
-        if(keyCode !== 13) { activate.call(self, event); }
+        if(keyCode !== 13){
+            run(event);
+        }
         if(keyCode === 9){
             onTab(event);
         }else

@@ -38,6 +38,8 @@ class DOMTextAutocomplete {
             selected = 'auto-selected'
         } = (classes || {});
 
+        let keyTimer;
+
         classes = this.classes = {
             main, data, selected
         };
@@ -63,11 +65,19 @@ class DOMTextAutocomplete {
         this.element = toElement(parent);
         this.element.style.opacity = 0;
 
+        function run(event){
+            //Debounce the dropdown activation
+            clearTimeout(keyTimer);
+            keyTimer = setTimeout(()=>{
+                activate.call(self, event);
+            }, 100);
+        }
+
         function onTab(event){
             let result = self.searchable.match(input.value);
             if(!result.notFound){
                 input.value = result.value;
-                activate.call(self, event);
+                run(event);
             }
         }
 
@@ -92,7 +102,9 @@ class DOMTextAutocomplete {
 
         function onKeyup(event){
             let keyCode = event.which || event.keyCode;
-            if(keyCode !== 13) activate.call(self, event);
+            if(keyCode !== 13){
+                run(event);
+            }
             if(keyCode === 9){
                 onTab(event);
             }else
