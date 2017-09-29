@@ -7,7 +7,8 @@ try{
             '<li class="main-target value-target" data-value="The Thing">The Thing</li>',
             '<li class="main-target value-target" data-value="Super man">Super man</li>',
             '<li class="main-target value-target" data-value="Legend of Sleepy Hollow">Legend of Sleepy Hollow</li>',
-            '<li class="main-target value-target" data-value="The Shining">The Shining</li>'
+            '<li class="main-target value-target" data-value="The Shining">The Shining</li>',
+            '<li class="main-target value-target" data-value="Fifty Shades of Grey">Fifty Shades of Grey</li>'
         ],
         separator: '[ ]+',
         activate(event){

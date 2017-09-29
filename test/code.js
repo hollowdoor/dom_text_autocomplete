@@ -773,8 +773,6 @@ Searchable.prototype.match = function match (value){
 
     list = list.filter(function (v){ return !this$1.sep.test(v); });
 
-    //return {notFound: true};
-
     var next = this.tree, last;
 
     var result = [];
@@ -823,9 +821,6 @@ Searchable.prototype.findAll = function findAll (value){
     .map(function (v){ return v.toLowerCase(); });
 
     list = list.filter(function (v){ return !this$1.sep.test(v); });
-
-    console.log('list ', list);
-    //return [];
 
     var next = this.tree, last, results = [];
 
@@ -1154,7 +1149,8 @@ try{
             '<li class="main-target value-target" data-value="The Thing">The Thing</li>',
             '<li class="main-target value-target" data-value="Super man">Super man</li>',
             '<li class="main-target value-target" data-value="Legend of Sleepy Hollow">Legend of Sleepy Hollow</li>',
-            '<li class="main-target value-target" data-value="The Shining">The Shining</li>'
+            '<li class="main-target value-target" data-value="The Shining">The Shining</li>',
+            '<li class="main-target value-target" data-value="Fifty Shades of Grey">Fifty Shades of Grey</li>'
         ],
         separator: '[ ]+',
         activate: function activate(event){
