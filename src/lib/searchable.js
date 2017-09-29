@@ -14,12 +14,15 @@ export default class Searchable {
         this.dataProp = camelcase(dataKey);
         this.dataKey = dataKey;
         this.tree = {branches: {}};
-        this.sep = new RegExp(separator);
+        this.sep = new RegExp('('+separator+')');
     }
     push(element){
         let src = getTarget(element, [this.classes.data]);
         let value = src.dataset[this.dataProp];
-        let list = value.split(this.sep);
+        let list = value
+        .split(this.sep)
+        .filter(item=>!this.sep.test(item));
+
         let current = this.tree;
         let next = current;
         list.forEach(item=>{
@@ -38,6 +41,16 @@ export default class Searchable {
         let list = value.split(this.sep)
         .filter(v=>v.length)
         .map(v=>v.toLowerCase());
+
+        let sep = '';
+
+        for(let i=0; i<list.length; i++){
+            if(this.sep.test(list[i])){
+                sep = list[i]; break;
+            }
+        }
+
+        list = list.filter(v=>!this.sep.test(v));
 
         let next = this.tree, last;
 
@@ -64,7 +77,7 @@ export default class Searchable {
                             result = last.branches[key].value;
                         }else{
                             result.push(last.branches[key].value);
-                            result = result.join(this.sep);
+                            result = result.join(sep);
                         }
 
                         return {
@@ -83,6 +96,8 @@ export default class Searchable {
         let list = value.split(this.sep)
         .filter(v=>v.length)
         .map(v=>v.toLowerCase());
+
+        list = list.filter(v=>!this.sep.test(v));
 
         let next = this.tree, last, results = [];
 

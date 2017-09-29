@@ -731,12 +731,17 @@ var Searchable = function Searchable(ref){
     this.dataProp = camelcase(dataKey);
     this.dataKey = dataKey;
     this.tree = {branches: {}};
-    this.sep = new RegExp(separator);
+    this.sep = new RegExp('('+separator+')');
 };
 Searchable.prototype.push = function push (element){
+        var this$1 = this;
+
     var src = getTarget(element, [this.classes.data]);
     var value = src.dataset[this.dataProp];
-    var list = value.split(this.sep);
+    var list = value
+    .split(this.sep)
+    .filter(function (item){ return !this$1.sep.test(item); });
+
     var current = this.tree;
     var next = current;
     list.forEach(function (item){
@@ -758,14 +763,26 @@ Searchable.prototype.match = function match (value){
     .filter(function (v){ return v.length; })
     .map(function (v){ return v.toLowerCase(); });
 
+    var sep = '';
+
+    for(var i=0; i<list.length; i++){
+        if(this$1.sep.test(list[i])){
+            sep = list[i]; break;
+        }
+    }
+
+    list = list.filter(function (v){ return !this$1.sep.test(v); });
+
+    //return {notFound: true};
+
     var next = this.tree, last;
 
     var result = [];
 
-    for(var i=0; i<list.length; ++i){
+    for(var i$1=0; i$1<list.length; ++i$1){
         if(next){
             last = next;
-            next = next.branches[list[i]] || false;
+            next = next.branches[list[i$1]] || false;
 
             if(next){
                 result.push(next.value);
@@ -773,7 +790,7 @@ Searchable.prototype.match = function match (value){
         }
 
         if(!next && last){
-            var potential = list[i];
+            var potential = list[i$1];
             var keys = Object.keys(last.branches);
             for(var j=0; j<keys.length; j++){
 
@@ -783,7 +800,7 @@ Searchable.prototype.match = function match (value){
                         result = last.branches[key].value;
                     }else{
                         result.push(last.branches[key].value);
-                        result = result.join(this$1.sep);
+                        result = result.join(sep);
                     }
 
                     return {
@@ -798,10 +815,17 @@ Searchable.prototype.match = function match (value){
     return {notFound: true};
 };
 Searchable.prototype.findAll = function findAll (value){
+        var this$1 = this;
+
 
     var list = value.split(this.sep)
     .filter(function (v){ return v.length; })
     .map(function (v){ return v.toLowerCase(); });
+
+    list = list.filter(function (v){ return !this$1.sep.test(v); });
+
+    console.log('list ', list);
+    //return [];
 
     var next = this.tree, last, results = [];
 
@@ -951,9 +975,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     function onKeyup(event){
         var keyCode = event.which || event.keyCode;
-        /*if(keyCode !== 13){
-            run(event);
-        }*/
         if(noKeyDown.indexOf(keyCode) === -1){
             run(event);
         }
