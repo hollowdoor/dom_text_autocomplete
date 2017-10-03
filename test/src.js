@@ -3,14 +3,10 @@ import autoComplete from '../';
 try{
     const complete = autoComplete(document.querySelector('input'), {
         parent: '<ol></ol>',
-        children: [
-            '<li class="main-target value-target" data-value="The Thing">The Thing</li>',
-            '<li class="main-target value-target" data-value="Super man">Super man</li>',
-            '<li class="main-target value-target" data-value="Legend of Sleepy Hollow">Legend of Sleepy Hollow</li>',
-            '<li class="main-target value-target" data-value="The Shining">The Shining</li>',
-            '<li class="main-target value-target" data-value="Fifty Shades of Grey">Fifty Shades of Grey</li>'
-        ],
         separator: '[ ]+',
+        render(data){
+            return `<li>${data.value}</li>`;
+        },
         activate(event){
             this.show();
         },
@@ -22,6 +18,16 @@ try{
             this.hide();
         }
     });
+
+    let data = [
+        {value: 'The Thing'},
+        {value: 'Super man'},
+        {value: 'Legend of Sleepy Hollow'},
+        {value: 'The Shining'},
+        {value: 'Fifty Shades of Grey'}
+    ];
+
+    complete.push(...data);
 
     complete.input.focus();
 

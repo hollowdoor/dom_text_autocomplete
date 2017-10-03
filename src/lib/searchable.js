@@ -13,29 +13,59 @@ export default class Searchable {
         this.classes = {main, data};
         this.dataProp = camelcase(dataKey);
         this.dataKey = dataKey;
-        this.tree = {branches: {}};
+        this.tree = {branches: {}, items: []};
         this.sep = new RegExp('('+separator+')');
     }
-    push(element){
-        let src = getTarget(element, [this.classes.data]);
-        let value = src.dataset[this.dataProp];
-        let list = value
-        .split(this.sep)
-        .filter(item=>!this.sep.test(item));
+    push(...datas){
+        datas.forEach(data=>{
 
-        let current = this.tree;
-        let next = current;
-        list.forEach(item=>{
-            let key = item.toLowerCase();
-            next = (next.branches[key] = next.branches[key] || {});
-            next.branches = next.branches || {};
-            next.value = item;
+            let next = this.tree;
+            let list = data.value
+            .split('');
+
+            list.forEach(item=>{
+                let key = item.toLowerCase();
+                next = (next.branches[key] = next.branches[key] || {});
+                next.branches = next.branches || {};
+                next.items = next.items || [];
+                next.items.push(data);
+            });
+
+            next.leaf = true;
         });
+    }
+    findAll(value){
+        let list = value.split('')
+        .filter(v=>v.length)
+        .map(v=>v.toLowerCase());
 
-        next.elements = next.elements || [];
-        next.leaf = true;
-        next.value = value;
-        next.elements.push(element);
+        let next = this.tree,
+            results = [],
+            len = list.length + 1,
+            stored = {},
+            last;
+
+        if(!list.length) return [];
+
+        for(let i=0; i<len; i++){
+            last = next;
+            next = next.branches[list[i]];
+            if(!next){
+                if(list[i] !== void 0) last = null;
+                break;
+            };
+        }
+
+        if(!last) return [];
+        return [].concat(last.items);
+        for(let j=0; j<last.items.length; j++){
+            if(!stored[last.items[j].value]){
+                results.push(last.items[j]);
+                stored[last.items[j].value] = 1;
+            }
+        }
+
+        return results;
     }
     match(value){
         let list = value.split(this.sep)
@@ -91,45 +121,6 @@ export default class Searchable {
 
         return {notFound: true};
     }
-    findAll(value){
-
-        let list = value.split(this.sep)
-        .filter(v=>v.length)
-        .map(v=>v.toLowerCase());
-
-        list = list.filter(v=>!this.sep.test(v));
-
-        let next = this.tree, last, results = [];
-
-        if(!list.length){
-            return [];
-        }
-
-        for(let i=0; i<list.length; ++i){
-
-            if(next && next.branches){
-                last = next;
-                next = next.branches[list[i]] || false;
-            }
-
-            if(next && i + 1 === list.length){
-                toLeaves(next, results);
-            }else
-
-            if(!next){
-                let potential = list[i];
-                let keys = Object.keys(last.branches);
-                for(let j=0; j<keys.length; ++j){
-                    let key = keys[j];
-                    if(key === potential || key.indexOf(potential) === 0){
-                        toLeaves(last.branches[keys[j]], results);
-                    }
-                }
-            }
-        }
-
-        return results;
-    }
 }
 
 function toLeaves(tree, results = [], depthLimit = 400){
@@ -144,10 +135,6 @@ function toLeaves(tree, results = [], depthLimit = 400){
 
         for(let i=0; i<keys.length; i++){
             let current = tree.branches[keys[i]];
-
-            if(current.leaf){
-                results.push(current);
-            }
 
             toLeaves(current, results, depthLimit);
         }

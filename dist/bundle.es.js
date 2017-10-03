@@ -44,31 +44,63 @@ var Searchable = function Searchable(ref){
     this.classes = {main: main, data: data};
     this.dataProp = camelcase(dataKey);
     this.dataKey = dataKey;
-    this.tree = {branches: {}};
+    this.tree = {branches: {}, items: []};
     this.sep = new RegExp('('+separator+')');
 };
-Searchable.prototype.push = function push (element){
+Searchable.prototype.push = function push (){
         var this$1 = this;
+        var datas = [], len = arguments.length;
+        while ( len-- ) datas[ len ] = arguments[ len ];
 
-    var src = getTarget(element, [this.classes.data]);
-    var value = src.dataset[this.dataProp];
-    var list = value
-    .split(this.sep)
-    .filter(function (item){ return !this$1.sep.test(item); });
+    datas.forEach(function (data){
 
-    var current = this.tree;
-    var next = current;
-    list.forEach(function (item){
-        var key = item.toLowerCase();
-        next = (next.branches[key] = next.branches[key] || {});
-        next.branches = next.branches || {};
-        next.value = item;
+        var next = this$1.tree;
+        var list = data.value
+        .split('');
+
+        list.forEach(function (item){
+            var key = item.toLowerCase();
+            next = (next.branches[key] = next.branches[key] || {});
+            next.branches = next.branches || {};
+            next.items = next.items || [];
+            next.items.push(data);
+        });
+
+        next.leaf = true;
     });
+};
+Searchable.prototype.findAll = function findAll (value){
+    var list = value.split('')
+    .filter(function (v){ return v.length; })
+    .map(function (v){ return v.toLowerCase(); });
 
-    next.elements = next.elements || [];
-    next.leaf = true;
-    next.value = value;
-    next.elements.push(element);
+    var next = this.tree,
+        results = [],
+        len = list.length + 1,
+        stored = {},
+        last;
+
+    if(!list.length) { return []; }
+
+    for(var i=0; i<len; i++){
+        last = next;
+        next = next.branches[list[i]];
+        if(!next){
+            if(list[i] !== void 0) { last = null; }
+            break;
+        }
+    }
+
+    if(!last) { return []; }
+    return [].concat(last.items);
+    for(var j=0; j<last.items.length; j++){
+        if(!stored[last.items[j].value]){
+            results.push(last.items[j]);
+            stored[last.items[j].value] = 1;
+        }
+    }
+
+    return results;
 };
 Searchable.prototype.match = function match (value){
         var this$1 = this;
@@ -126,75 +158,6 @@ Searchable.prototype.match = function match (value){
 
     return {notFound: true};
 };
-Searchable.prototype.findAll = function findAll (value){
-        var this$1 = this;
-
-
-    var list = value.split(this.sep)
-    .filter(function (v){ return v.length; })
-    .map(function (v){ return v.toLowerCase(); });
-
-    list = list.filter(function (v){ return !this$1.sep.test(v); });
-
-    var next = this.tree, last, results = [];
-
-    if(!list.length){
-        return [];
-    }
-
-    for(var i=0; i<list.length; ++i){
-
-        if(next && next.branches){
-            last = next;
-            next = next.branches[list[i]] || false;
-        }
-
-        if(next && i + 1 === list.length){
-            toLeaves(next, results);
-        }else
-
-        if(!next){
-            var potential = list[i];
-            var keys = Object.keys(last.branches);
-            for(var j=0; j<keys.length; ++j){
-                var key = keys[j];
-                if(key === potential || key.indexOf(potential) === 0){
-                    toLeaves(last.branches[keys[j]], results);
-                }
-            }
-        }
-    }
-
-    return results;
-};
-
-function toLeaves(tree, results, depthLimit){
-    if ( results === void 0 ) results = [];
-    if ( depthLimit === void 0 ) depthLimit = 400;
-
-
-    if(tree !== void 0){
-
-        if(tree.leaf){
-            results.push(tree);
-        }
-
-        var keys = Object.keys(tree.branches);
-
-        for(var i=0; i<keys.length; i++){
-            var current = tree.branches[keys[i]];
-
-            if(current.leaf){
-                results.push(current);
-            }
-
-            toLeaves(current, results, depthLimit);
-        }
-
-    }
-
-    return results;
-}
 
 var noKeyDown = [9, 13, 38, 40];
 
@@ -202,6 +165,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) ref = {};
     var parent = ref.parent; if ( parent === void 0 ) parent = '<ol></ol>';
     var classes = ref.classes; if ( classes === void 0 ) classes = {};
+    var render = ref.render; if ( render === void 0 ) render = null;
     var separator = ref.separator; if ( separator === void 0 ) separator = '[ ]+';
     var dataKey = ref.dataKey; if ( dataKey === void 0 ) dataKey = 'value';
     var display = ref.display; if ( display === void 0 ) display = 'block';
@@ -212,7 +176,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var activate = ref.activate; if ( activate === void 0 ) activate = function(){
         this.show();
     };
-    var children = ref.children; if ( children === void 0 ) children = [];
 
     var self = this;
 
@@ -223,6 +186,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     }catch(e){
         throw e;
     }
+
+    this._render = render;
 
     this.input.setAttribute('tabindex', '-1');
 
@@ -257,8 +222,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     this.element = toElement(parent);
     this.element.style.opacity = 0;
-
-
 
     function run(event){
         //Debounce the dropdown activation
@@ -300,8 +263,6 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         }
     }
 
-    (ref$2 = this).push.apply(ref$2, children);
-
     var down = false;
 
     function onEnter(event){
@@ -341,33 +302,28 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         this.element.removeEventListener('mouseup', onUp, false);
         this.remove();
     };
-    var ref$2;
 };
 
 var prototypeAccessors = { children: {},showing: {} };
 DOMTextAutocomplete.prototype.show = function show (){
         var this$1 = this;
 
+    var value = this.input.value;
+    var found = this.searchable.findAll(value);
 
-    var input = this.input.value.toLowerCase();
-    try{
-        var found = this.searchable.findAll(this.input.value);
+    this.element.innerHTML = '';
+    found.forEach(function (data){
+        var html = this$1._render(data);
+        this$1.element.insertAdjacentHTML(
+            'beforeend',
+            html
+        );
 
-        this.visible.forEach(function (el){
-            el.style.display = 'none';
-        });
-        this.visible = [];
-        found.forEach(function (item){
-            item.elements.forEach(function (el){
-                el.style.display = this$1.display;
-                this$1.visible.push(el);
-            });
-        });
-
-        if(this.visible.length){
-            this.element.style.opacity = 1;
-        }
-    }catch(e){ console.error(e);}
+        this$1.element.lastChild.dataset[this$1.dataKey] = data.value;
+    });
+    if(found.length){
+        this.element.style.opacity = 1;
+    }
 };
 DOMTextAutocomplete.prototype.forEach = function forEach (callback){
     this.children.forEach(callback);
@@ -425,10 +381,7 @@ DOMTextAutocomplete.prototype.push = function push (){
         while ( len-- ) values[ len ] = arguments[ len ];
 
     values.forEach(function (value){
-        var el = toElement(value);
-        this$1.element.appendChild(el);
-        this$1.searchable.push(el);
-        el.style.display = 'none';
+        this$1.searchable.push(value);
     });
     return this;
 };

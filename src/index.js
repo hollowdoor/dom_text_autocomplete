@@ -5,10 +5,12 @@ import Searchable from './lib/searchable.js';
 import getTarget from './lib/get_target.js';
 import { noKeyDown } from './lib/data.js';
 
+
 class DOMTextAutocomplete {
     constructor(input, {
         parent = '<ol></ol>',
         classes = {},
+        render = null,
         separator = '[ ]+',
         dataKey = 'value',
         display = 'block',
@@ -18,8 +20,7 @@ class DOMTextAutocomplete {
         },
         activate = function(){
             this.show();
-        },
-        children = []
+        }
     } = {}){
         const self = this;
 
@@ -30,6 +31,8 @@ class DOMTextAutocomplete {
         }catch(e){
             throw e;
         }
+
+        this._render = render;
 
         this.input.setAttribute('tabindex', '-1');
 
@@ -65,8 +68,6 @@ class DOMTextAutocomplete {
 
         this.element = toElement(parent);
         this.element.style.opacity = 0;
-
-
 
         function run(event){
             //Debounce the dropdown activation
@@ -121,8 +122,6 @@ class DOMTextAutocomplete {
             }
         }
 
-        this.push(...children);
-
         let down = false;
 
         function onEnter(event){
@@ -164,26 +163,22 @@ class DOMTextAutocomplete {
         };
     }
     show(){
+        let value = this.input.value;
+        let found = this.searchable.findAll(value);
 
-        let input = this.input.value.toLowerCase();
-        try{
-            let found = this.searchable.findAll(this.input.value);
+        this.element.innerHTML = '';
+        found.forEach(data=>{
+            let html = this._render(data);
+            this.element.insertAdjacentHTML(
+                'beforeend',
+                html
+            );
 
-            this.visible.forEach(el=>{
-                el.style.display = 'none';
-            });
-            this.visible = [];
-            found.forEach(item=>{
-                item.elements.forEach(el=>{
-                    el.style.display = this.display;
-                    this.visible.push(el);
-                });
-            });
-
-            if(this.visible.length){
-                this.element.style.opacity = 1;
-            }
-        }catch(e){ console.error(e)}
+            this.element.lastChild.dataset[this.dataKey] = data.value;
+        });
+        if(found.length){
+            this.element.style.opacity = 1;
+        }
     }
     forEach(callback){
         this.children.forEach(callback);
@@ -237,10 +232,7 @@ class DOMTextAutocomplete {
     }
     push(...values){
         values.forEach(value=>{
-            let el = toElement(value);
-            this.element.appendChild(el);
-            this.searchable.push(el);
-            el.style.display = 'none';
+            this.searchable.push(value);
         });
         return this;
     }
