@@ -36,9 +36,35 @@ export default class Searchable {
             next.leaf = true;
         });
     }
+    remove(...datas){
+        datas.forEach(data=>{
+            let next = this.tree, last;
+            let list = data.value.split('');
+
+            for(let i=0; i<list.length; i++){
+                let char = list[i];
+                let key = char.toLowerCase();
+                let index;
+
+                last = next;
+                next = next.branches[key];
+
+                if(next === void 0) break;
+
+                if((index = next.items.indexOf(data.value)) !== -1){
+                    next.items.splice(index, 1);
+                    if(!next.items.length){
+                        delete last.branches[key];
+                    }else{
+                        next = next.branches[key];
+                    }
+                }
+
+            }
+        });
+    }
     match(value){
         let list = value.split('')
-        .filter(v=>v.length)
         .map(v=>v.toLowerCase());
 
         let next = this.tree,

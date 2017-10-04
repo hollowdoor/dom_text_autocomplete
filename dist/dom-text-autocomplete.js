@@ -759,7 +759,6 @@ Searchable.prototype.push = function push (){
 };
 Searchable.prototype.match = function match (value){
     var list = value.split('')
-    .filter(function (v){ return v.length; })
     .map(function (v){ return v.toLowerCase(); });
 
     var next = this.tree,
