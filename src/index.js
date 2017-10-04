@@ -48,11 +48,7 @@ class DOMTextAutocomplete {
             main, data, selected
         };
 
-        this.searchable = new Searchable({
-            separator,
-            dataKey,
-            classes
-        });
+        this.searchable = new Searchable();
 
         Object.keys(classes).forEach(clas=>{
             try{

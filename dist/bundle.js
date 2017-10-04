@@ -192,11 +192,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         main: main, data: data, selected: selected
     };
 
-    this.searchable = new Searchable({
-        separator: separator,
-        dataKey: dataKey,
-        classes: classes
-    });
+    this.searchable = new Searchable();
 
     Object.keys(classes).forEach(function (clas){
         try{
