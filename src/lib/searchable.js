@@ -24,13 +24,13 @@ export default class Searchable {
             let list = data.value
             .split('');
 
-            list.forEach(item=>{
-                let key = item.toLowerCase();
+            list.forEach(char=>{
+                let key = char.toLowerCase();
                 next = (next.branches[key] = next.branches[key] || Object.create(null));
                 next.branches = next.branches || Object.create(null);
                 next.items = next.items || [];
                 next.items.push(data);
-                next.value = item;
+                next.value = char;
             });
 
             next.leaf = true;

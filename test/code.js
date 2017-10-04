@@ -747,13 +747,13 @@ Searchable.prototype.push = function push (){
         var list = data.value
         .split('');
 
-        list.forEach(function (item){
-            var key = item.toLowerCase();
+        list.forEach(function (char){
+            var key = char.toLowerCase();
             next = (next.branches[key] = next.branches[key] || Object.create(null));
             next.branches = next.branches || Object.create(null);
             next.items = next.items || [];
             next.items.push(data);
-            next.value = item;
+            next.value = char;
         });
 
         next.leaf = true;
@@ -784,7 +784,7 @@ Searchable.prototype.match = function match (value){
         }
     }
 
-    return {tree: last, string: string};
+    return {tree: last, string: string, value: value};
 };
 Searchable.prototype.findAll = function findAll (value){
     var ref = this.match(value);
