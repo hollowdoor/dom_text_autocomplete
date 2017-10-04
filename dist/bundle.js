@@ -17,8 +17,7 @@ Searchable.prototype.push = function push (){
     datas.forEach(function (data){
 
         var next = this$1.tree;
-        var list = data.value
-        .split('');
+        var list = data.value.split('');
 
         list.forEach(function (char){
             var key = char.toLowerCase();
@@ -64,13 +63,10 @@ Searchable.prototype.remove = function remove (){
     });
 };
 Searchable.prototype.match = function match (value){
-    var list = value.split('')
-    .map(function (v){ return v.toLowerCase(); });
+    var list = value.split('').map(function (v){ return v.toLowerCase(); });
 
     var next = this.tree,
-        results = [],
         len = list.length + 1,
-        stored = {},
         last,
         string = '';
 

@@ -6,8 +6,7 @@ export default class Searchable {
         datas.forEach(data=>{
 
             let next = this.tree;
-            let list = data.value
-            .split('');
+            let list = data.value.split('');
 
             list.forEach(char=>{
                 let key = char.toLowerCase();
@@ -49,13 +48,10 @@ export default class Searchable {
         });
     }
     match(value){
-        let list = value.split('')
-        .map(v=>v.toLowerCase());
+        let list = value.split('').map(v=>v.toLowerCase());
 
         let next = this.tree,
-            results = [],
             len = list.length + 1,
-            stored = {},
             last,
             string = '';
 
