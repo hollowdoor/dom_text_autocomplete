@@ -2,51 +2,8 @@ import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
 
-function getTarget(target, targets){
-    if ( targets === void 0 ) targets = [];
-
-
-    for(var i=0; i<targets.length; i++){
-        if(matches(target, '.'+targets[i])){
-            return target;
-        }
-
-        if(target.children.length){
-            var el = target.querySelector('.'+targets[i]);
-            if(el) { return el; }
-        }
-    }
-
-    return null;
-}
-
-/*export default function getTarget(target, targets){
-    if(matches(target, '.'+targets.main)){
-        return target;
-    }
-
-    if(target.children.length && !matches(target, '.'+targets.data)){
-        return target.querySelector('.'+targets.data);
-    }
-    return target;
-}*/
-
-var Searchable = function Searchable(ref){
-    if ( ref === void 0 ) ref = {};
-    var classes = ref.classes; if ( classes === void 0 ) classes = {};
-    var dataKey = ref.dataKey; if ( dataKey === void 0 ) dataKey = 'value';
-    var separator = ref.separator; if ( separator === void 0 ) separator = '[ ]+';
-
-
-    var main = classes.main;
-    var data = classes.data;
-
-    this.classes = {main: main, data: data};
-    this.dataProp = camelcase(dataKey);
-    this.dataKey = dataKey;
+var Searchable = function Searchable(){
     this.tree = {branches: {}, items: []};
-    //this.sep = new RegExp('('+separator+')');
-    this.sep = ' ';
 };
 Searchable.prototype.push = function push (){
         var this$1 = this;
@@ -69,6 +26,37 @@ Searchable.prototype.push = function push (){
         });
 
         next.leaf = true;
+    });
+};
+Searchable.prototype.remove = function remove (){
+        var this$1 = this;
+        var datas = [], len = arguments.length;
+        while ( len-- ) datas[ len ] = arguments[ len ];
+
+    datas.forEach(function (data){
+        var next = this$1.tree, last;
+        var list = data.value.split('');
+
+        for(var i=0; i<list.length; i++){
+            var char = list[i];
+            var key = char.toLowerCase();
+            var index = (void 0);
+
+            last = next;
+            next = next.branches[key];
+
+            if(next === void 0) { break; }
+
+            if((index = next.items.indexOf(data.value)) !== -1){
+                next.items.splice(index, 1);
+                if(!next.items.length){
+                    delete last.branches[key];
+                }else{
+                    next = next.branches[key];
+                }
+            }
+
+        }
     });
 };
 Searchable.prototype.match = function match (value){
@@ -131,6 +119,35 @@ Searchable.prototype.nextPhrase = function nextPhrase (value, sep){
 
     return iter(tree);
 };
+
+function getTarget(target, targets){
+    if ( targets === void 0 ) targets = [];
+
+
+    for(var i=0; i<targets.length; i++){
+        if(matches(target, '.'+targets[i])){
+            return target;
+        }
+
+        if(target.children.length){
+            var el = target.querySelector('.'+targets[i]);
+            if(el) { return el; }
+        }
+    }
+
+    return null;
+}
+
+/*export default function getTarget(target, targets){
+    if(matches(target, '.'+targets.main)){
+        return target;
+    }
+
+    if(target.children.length && !matches(target, '.'+targets.data)){
+        return target.querySelector('.'+targets.data);
+    }
+    return target;
+}*/
 
 var noKeyDown = [9, 13, 38, 40];
 

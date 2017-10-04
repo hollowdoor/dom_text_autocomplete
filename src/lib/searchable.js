@@ -1,21 +1,6 @@
-import camelcase from 'camelcase';
-import getTarget from './get_target.js';
-
 export default class Searchable {
-    constructor({
-        classes = {},
-        dataKey = 'value',
-        separator = '[ ]+'
-    } = {}){
-
-        let { main, data } = classes;
-
-        this.classes = {main, data};
-        this.dataProp = camelcase(dataKey);
-        this.dataKey = dataKey;
+    constructor(){
         this.tree = {branches: {}, items: []};
-        //this.sep = new RegExp('('+separator+')');
-        this.sep = ' ';
     }
     push(...datas){
         datas.forEach(data=>{
