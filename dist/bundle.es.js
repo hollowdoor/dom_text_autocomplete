@@ -45,7 +45,8 @@ var Searchable = function Searchable(ref){
     this.dataProp = camelcase(dataKey);
     this.dataKey = dataKey;
     this.tree = {branches: {}, items: []};
-    this.sep = new RegExp('('+separator+')');
+    //this.sep = new RegExp('('+separator+')');
+    this.sep = ' ';
 };
 Searchable.prototype.push = function push (){
         var this$1 = this;
@@ -60,16 +61,17 @@ Searchable.prototype.push = function push (){
 
         list.forEach(function (item){
             var key = item.toLowerCase();
-            next = (next.branches[key] = next.branches[key] || {});
-            next.branches = next.branches || {};
+            next = (next.branches[key] = next.branches[key] || Object.create(null));
+            next.branches = next.branches || Object.create(null);
             next.items = next.items || [];
             next.items.push(data);
+            next.value = item;
         });
 
         next.leaf = true;
     });
 };
-Searchable.prototype.findAll = function findAll (value){
+Searchable.prototype.match = function match (value){
     var list = value.split('')
     .filter(function (v){ return v.length; })
     .map(function (v){ return v.toLowerCase(); });
@@ -78,9 +80,10 @@ Searchable.prototype.findAll = function findAll (value){
         results = [],
         len = list.length + 1,
         stored = {},
-        last;
+        last,
+        string = '';
 
-    if(!list.length) { return []; }
+    if(!list.length) { return null; }
 
     for(var i=0; i<len; i++){
         last = next;
@@ -88,75 +91,46 @@ Searchable.prototype.findAll = function findAll (value){
         if(!next){
             if(list[i] !== void 0) { last = null; }
             break;
+        }else{
+            string += next.value;
         }
     }
 
-    if(!last) { return []; }
-    return [].concat(last.items);
-    for(var j=0; j<last.items.length; j++){
-        if(!stored[last.items[j].value]){
-            results.push(last.items[j]);
-            stored[last.items[j].value] = 1;
-        }
-    }
-
-    return results;
+    return {tree: last, string: string};
 };
-Searchable.prototype.match = function match (value){
-        var this$1 = this;
+Searchable.prototype.findAll = function findAll (value){
+    var ref = this.match(value);
+        var tree = ref.tree;
+    if(!tree) { return []; }
+    return [].concat(tree.items);
+};
+Searchable.prototype.nextPhrase = function nextPhrase (value, sep){
 
-    var list = value.split(this.sep)
-    .filter(function (v){ return v.length; })
-    .map(function (v){ return v.toLowerCase(); });
+    var ref = this.match(value);
+        var tree = ref.tree;
+        var string = ref.string;
+        var result = string;
 
-    var sep = '';
+    sep = /[ ]+/;
 
-    for(var i=0; i<list.length; i++){
-        if(this$1.sep.test(list[i])){
-            sep = list[i]; break;
+    var iter = function (next){
+
+        if(next.leaf){
+            return result;
         }
-    }
 
-    list = list.filter(function (v){ return !this$1.sep.test(v); });
-
-    var next = this.tree, last;
-
-    var result = [];
-
-    for(var i$1=0; i$1<list.length; ++i$1){
-        if(next){
-            last = next;
-            next = next.branches[list[i$1]] || false;
-
-            if(next){
-                result.push(next.value);
+        var keys = Object.keys(next.branches);
+        for(var key in next.branches){
+            if(sep.test(key)){
+                return result;
             }
+            result += next.branches[key].value;
+            return iter(next.branches[key])
+
         }
+    };
 
-        if(!next && last){
-            var potential = list[i$1];
-            var keys = Object.keys(last.branches);
-            for(var j=0; j<keys.length; j++){
-
-                var key = keys[j];
-                if(key === potential || key.indexOf(potential) === 0){
-                    if(last.branches[key].leaf){
-                        result = last.branches[key].value;
-                    }else{
-                        result.push(last.branches[key].value);
-                        result = result.join(sep);
-                    }
-
-                    return {
-                        value: result
-
-                    };
-                }
-            }
-        }
-    }
-
-    return {notFound: true};
+    return iter(tree);
 };
 
 var noKeyDown = [9, 13, 38, 40];
@@ -232,11 +206,15 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     }
 
     function onTab(event){
-        var result = self.searchable.match(input.value);
+        /*let result = self.searchable.match(input.value);
         if(!result.notFound){
             input.value = result.value;
             run(event);
-        }
+        }*/
+        var result = self.searchable
+        .nextPhrase(input.value, ' ');
+        console.log("result ",result);
+        input.value = result;
     }
 
     function onKeydown(event){

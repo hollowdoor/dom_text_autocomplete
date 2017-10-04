@@ -78,11 +78,15 @@ class DOMTextAutocomplete {
         }
 
         function onTab(event){
-            let result = self.searchable.match(input.value);
+            /*let result = self.searchable.match(input.value);
             if(!result.notFound){
                 input.value = result.value;
                 run(event);
-            }
+            }*/
+            let result = self.searchable
+            .nextPhrase(input.value, ' ');
+            console.log("result ",result);
+            input.value = result;
         }
 
         function onArrow(event){

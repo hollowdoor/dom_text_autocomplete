@@ -14,7 +14,8 @@ export default class Searchable {
         this.dataProp = camelcase(dataKey);
         this.dataKey = dataKey;
         this.tree = {branches: {}, items: []};
-        this.sep = new RegExp('('+separator+')');
+        //this.sep = new RegExp('('+separator+')');
+        this.sep = ' ';
     }
     push(...datas){
         datas.forEach(data=>{
@@ -25,16 +26,17 @@ export default class Searchable {
 
             list.forEach(item=>{
                 let key = item.toLowerCase();
-                next = (next.branches[key] = next.branches[key] || {});
-                next.branches = next.branches || {};
+                next = (next.branches[key] = next.branches[key] || Object.create(null));
+                next.branches = next.branches || Object.create(null);
                 next.items = next.items || [];
                 next.items.push(data);
+                next.value = item;
             });
 
             next.leaf = true;
         });
     }
-    findAll(value){
+    match(value){
         let list = value.split('')
         .filter(v=>v.length)
         .map(v=>v.toLowerCase());
@@ -43,9 +45,10 @@ export default class Searchable {
             results = [],
             len = list.length + 1,
             stored = {},
-            last;
+            last,
+            string = '';
 
-        if(!list.length) return [];
+        if(!list.length) return null;
 
         for(let i=0; i<len; i++){
             last = next;
@@ -53,93 +56,46 @@ export default class Searchable {
             if(!next){
                 if(list[i] !== void 0) last = null;
                 break;
-            };
-        }
-
-        if(!last) return [];
-        return [].concat(last.items);
-        for(let j=0; j<last.items.length; j++){
-            if(!stored[last.items[j].value]){
-                results.push(last.items[j]);
-                stored[last.items[j].value] = 1;
+            }else{
+                string += next.value;
             }
         }
 
-        return results;
+        return {tree: last, string, value};
     }
-    match(value){
-        let list = value.split(this.sep)
-        .filter(v=>v.length)
-        .map(v=>v.toLowerCase());
+    findAll(value){
+        let {tree} = this.match(value);
+        if(!tree) return [];
+        return [].concat(tree.items);
+    }
+    nextPhrase(value, sep){
 
-        let sep = '';
+        let {tree, string} = this.match(value),
+            result = string;
 
-        for(let i=0; i<list.length; i++){
-            if(this.sep.test(list[i])){
-                sep = list[i]; break;
+        sep = /[ ]+/;
+
+        const iter = (next)=>{
+
+            if(next.leaf){
+                return result;
             }
-        }
 
-        list = list.filter(v=>!this.sep.test(v));
-
-        let next = this.tree, last;
-
-        let result = [];
-
-        for(let i=0; i<list.length; ++i){
-            if(next){
-                last = next;
-                next = next.branches[list[i]] || false;
-
-                if(next){
-                    result.push(next.value);
+            let keys = Object.keys(next.branches);
+            for(let key in next.branches){
+                if(sep.test(key)){
+                    return result;
                 }
+                result += next.branches[key].value;
+                return iter(next.branches[key])
+
             }
+        };
 
-            if(!next && last){
-                let potential = list[i];
-                let keys = Object.keys(last.branches);
-                for(let j=0; j<keys.length; j++){
-
-                    let key = keys[j];
-                    if(key === potential || key.indexOf(potential) === 0){
-                        if(last.branches[key].leaf){
-                            result = last.branches[key].value;
-                        }else{
-                            result.push(last.branches[key].value);
-                            result = result.join(sep);
-                        }
-
-                        return {
-                            value: result
-
-                        };
-                    }
-                }
-            }
-        }
-
-        return {notFound: true};
+        return iter(tree);
     }
 }
 
-function toLeaves(tree, results = [], depthLimit = 400){
-
-    if(tree !== void 0){
-
-        if(tree.leaf){
-            results.push(tree);
-        }
-
-        let keys = Object.keys(tree.branches);
-
-        for(let i=0; i<keys.length; i++){
-            let current = tree.branches[keys[i]];
-
-            toLeaves(current, results, depthLimit);
-        }
-
-    }
-
-    return results;
+function lower(item){
+    return item.toLowerCase();
 }
