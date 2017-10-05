@@ -756,7 +756,7 @@ CharTree.prototype.match = function match (value){
         last,
         string = '';
 
-    if(!list.length) { return null; }
+    if(!list.length) { return {tree: null, string: string, value: value}; }
 
     for(var i=0; i<len; i++){
         last = next;
