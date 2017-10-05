@@ -4,7 +4,7 @@ import camelcase from 'camelcase';
 import CharTree from './lib/char_tree.js';
 import getTarget from './lib/get_target.js';
 import { noKeyDown } from './lib/data.js';
-import events from './lib/events.js';
+import events from 'dom-eve';
 
 
 class DOMTextAutocomplete {
@@ -160,19 +160,8 @@ class DOMTextAutocomplete {
         .on('mousedown', onDown, false)
         .on('mouseup', onUp, false);
 
-        /*document.addEventListener('keyup', onEnter);
-        input.addEventListener('keyup', onKeyup, false);
-        input.addEventListener('keydown', onKeydown, false);
-        this.element.addEventListener('mousedown', onDown, false);
-        this.element.addEventListener('mouseup', onUp, false);*/
-
         this.destroy = function(){
             tracker.clear();
-            /*document.removeEventListener('keyup', onEnter);
-            input.removeEventListener('keyup', onKeyup, false);
-            this.element.removeEventListener('mousedown', onDown, false);
-            this.element.removeEventListener('mouseup', onUp, false);
-            this.remove();*/
         };
     }
     show(){
