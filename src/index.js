@@ -4,6 +4,7 @@ import camelcase from 'camelcase';
 import CharTree from './lib/char_tree.js';
 import getTarget from './lib/get_target.js';
 import { noKeyDown } from './lib/data.js';
+import events from './lib/events.js';
 
 
 class DOMTextAutocomplete {
@@ -148,18 +149,30 @@ class DOMTextAutocomplete {
             down = false;
         }
 
-        document.addEventListener('keyup', onEnter);
+        const tracker = events.track();
+
+        events(document, tracker)
+        .on('keyup', onEnter);
+        events(input, tracker)
+        .on('keyup', onKeyup, false)
+        .on('keydown', onKeydown, false);
+        events(this.element, tracker)
+        .on('mousedown', onDown, false)
+        .on('mouseup', onUp, false);
+
+        /*document.addEventListener('keyup', onEnter);
         input.addEventListener('keyup', onKeyup, false);
         input.addEventListener('keydown', onKeydown, false);
         this.element.addEventListener('mousedown', onDown, false);
-        this.element.addEventListener('mouseup', onUp, false);
+        this.element.addEventListener('mouseup', onUp, false);*/
 
         this.destroy = function(){
-            document.removeEventListener('keyup', onEnter);
+            tracker.clear();
+            /*document.removeEventListener('keyup', onEnter);
             input.removeEventListener('keyup', onKeyup, false);
             this.element.removeEventListener('mousedown', onDown, false);
             this.element.removeEventListener('mouseup', onUp, false);
-            this.remove();
+            this.remove();*/
         };
     }
     show(){

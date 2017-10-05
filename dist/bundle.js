@@ -151,6 +151,75 @@ function getTarget(target, targets){
 
 var noKeyDown = [9, 13, 38, 40];
 
+var eventsProto = Object.assign(Object.create(null), {
+    on: function on(name, cb, options){
+        this.element.addEventListener(name, cb, options);
+        this._records[name] = this._records[name] || [];
+        this._records[name].push([
+            name, cb, options
+        ]);
+        return this;
+    },
+    off: function off(name, cb, options){
+        this.element.removeEventListener(name, cb, options);
+
+        if(this._records[name] !== void 0){
+            var records = this._records[name];
+
+            for(var i=0; i<records.length; i++){
+                if(records[i][1] === cb && records[i][2] === options){
+                    records.splice(i, 1);
+                    if(i + 1 !== records.length){
+                        --i;
+                    }
+                }
+            }
+        }
+        return this;
+    },
+    dispatch: function dispatch(event){
+        this.element.dispatchEvent(event);
+        return this;
+    },
+    clear: function clear(){
+        var this$1 = this;
+
+        for(var name in this$1._records){
+            var records = this$1._records[name];
+            records.forEach(function (record){
+                (ref = this$1).off.apply(ref, record);
+                var ref;
+            });
+        }
+        return this;
+    }
+});
+
+function events(element, tracker){
+    if ( tracker === void 0 ) tracker = null;
+
+    var eve = Object.create(eventsProto);
+    eve.element = element;
+    eve._records = Object.create(null);
+
+    if(tracker){
+        tracker.list.push(eve);
+    }
+
+    return eve;
+}
+
+events.track = function track(){
+    return {
+        list: [],
+        clear: function clear(){
+            this.list.forEach(function (item){
+                item.clear();
+            });
+        }
+    };
+};
+
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) ref = {};
     var parent = ref.parent; if ( parent === void 0 ) parent = '<ol></ol>';
@@ -279,18 +348,30 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         down = false;
     }
 
-    document.addEventListener('keyup', onEnter);
+    var tracker = events.track();
+
+    events(document, tracker)
+    .on('keyup', onEnter);
+    events(input, tracker)
+    .on('keyup', onKeyup, false)
+    .on('keydown', onKeydown, false);
+    events(this.element, tracker)
+    .on('mousedown', onDown, false)
+    .on('mouseup', onUp, false);
+
+    /*document.addEventListener('keyup', onEnter);
     input.addEventListener('keyup', onKeyup, false);
     input.addEventListener('keydown', onKeydown, false);
     this.element.addEventListener('mousedown', onDown, false);
-    this.element.addEventListener('mouseup', onUp, false);
+    this.element.addEventListener('mouseup', onUp, false);*/
 
     this.destroy = function(){
-        document.removeEventListener('keyup', onEnter);
+        tracker.clear();
+        /*document.removeEventListener('keyup', onEnter);
         input.removeEventListener('keyup', onKeyup, false);
         this.element.removeEventListener('mousedown', onDown, false);
         this.element.removeEventListener('mouseup', onUp, false);
-        this.remove();
+        this.remove();*/
     };
 };
 
