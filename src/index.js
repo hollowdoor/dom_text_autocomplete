@@ -1,7 +1,7 @@
 import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
-import Searchable from './lib/searchable.js';
+import CharTree from './lib/char_tree.js';
 import getTarget from './lib/get_target.js';
 import { noKeyDown } from './lib/data.js';
 
@@ -48,7 +48,7 @@ class DOMTextAutocomplete {
             main, data, selected
         };
 
-        this.searchable = new Searchable();
+        this.searchable = new CharTree();
 
         Object.keys(classes).forEach(clas=>{
             try{

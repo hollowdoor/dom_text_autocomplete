@@ -1,4 +1,4 @@
-export default class Searchable {
+export default class CharTree {
     constructor(){
         this.tree = {branches: {}, items: []};
     }

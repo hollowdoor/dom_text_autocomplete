@@ -2,10 +2,10 @@ import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
 
-var Searchable = function Searchable(){
+var CharTree = function CharTree(){
     this.tree = {branches: {}, items: []};
 };
-Searchable.prototype.push = function push (){
+CharTree.prototype.push = function push (){
         var this$1 = this;
         var datas = [], len = arguments.length;
         while ( len-- ) datas[ len ] = arguments[ len ];
@@ -27,7 +27,7 @@ Searchable.prototype.push = function push (){
         next.leaf = true;
     });
 };
-Searchable.prototype.remove = function remove (){
+CharTree.prototype.remove = function remove (){
         var this$1 = this;
         var datas = [], len = arguments.length;
         while ( len-- ) datas[ len ] = arguments[ len ];
@@ -58,7 +58,7 @@ Searchable.prototype.remove = function remove (){
         }
     });
 };
-Searchable.prototype.match = function match (value){
+CharTree.prototype.match = function match (value){
     var list = value.split('').map(function (v){ return v.toLowerCase(); });
 
     var next = this.tree,
@@ -81,13 +81,13 @@ Searchable.prototype.match = function match (value){
 
     return {tree: last, string: string, value: value};
 };
-Searchable.prototype.findAll = function findAll (value){
+CharTree.prototype.findAll = function findAll (value){
     var ref = this.match(value);
         var tree = ref.tree;
     if(!tree) { return []; }
     return [].concat(tree.items);
 };
-Searchable.prototype.nextPhrase = function nextPhrase (value, sep){
+CharTree.prototype.nextPhrase = function nextPhrase (value, sep){
 
     var ref = this.match(value);
         var tree = ref.tree;
@@ -188,7 +188,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         main: main, data: data, selected: selected
     };
 
-    this.searchable = new Searchable();
+    this.searchable = new CharTree();
 
     Object.keys(classes).forEach(function (clas){
         try{
