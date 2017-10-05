@@ -55,7 +55,7 @@ export default class CharTree {
             last,
             string = '';
 
-        if(!list.length) return null;
+        if(!list.length) return {tree: null, string, value};
 
         for(let i=0; i<len; i++){
             last = next;
