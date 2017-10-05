@@ -226,13 +226,25 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         input.value = result;
     }
 
-    function onKeydown(event){
-        if(event.keyCode === 9){
-            event.preventDefault();
-        }
-    }
+    var down = false;
 
-    function onKeyup(event){
+    var tracker = events.track();
+
+    events(document, tracker)
+    .on('keyup', function (event){
+        var key = event.which || event.keyCode;
+        if(self.showing && key === 13){
+            var el = self.element.querySelector('.'+selected);
+            if(el){
+                el.classList.remove(selected);
+                select.call(self, el.dataset[dataKey], el);
+                event.preventDefault();
+            }
+        }
+    });
+
+    events(input, tracker)
+    .on('keyup', function (event){
         var keyCode = event.which || event.keyCode;
         if(noKeyDown.indexOf(keyCode) === -1){
             run(event);
@@ -248,44 +260,24 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
                 self.choose(-1);
             }
         }
-    }
-
-    var down = false;
-
-    function onEnter(event){
-        var key = event.which || event.keyCode;
-        if(self.showing && key === 13){
-            var el = self.element.querySelector('.'+selected);
-            if(el){
-                el.classList.remove(selected);
-                select.call(self, el.dataset[dataKey], el);
-                event.preventDefault();
-            }
+    }, false)
+    .on('keydown', function (event){
+        if(event.keyCode === 9){
+            event.preventDefault();
         }
-    }
+    }, false);
 
-    function onDown(event){
+    events(this.element, tracker)
+    .on('mousedown', function (event){
         if(!down){
             down = true;
             var el = getTarget(event.target, [classes.data]);
             select.call(self, el.dataset[dataKey], el);
         }
-    }
-
-    function onUp(event){
+    }, false)
+    .on('mouseup', function (event){
         down = false;
-    }
-
-    var tracker = events.track();
-
-    events(document, tracker)
-    .on('keyup', onEnter);
-    events(input, tracker)
-    .on('keyup', onKeyup, false)
-    .on('keydown', onKeydown, false);
-    events(this.element, tracker)
-    .on('mousedown', onDown, false)
-    .on('mouseup', onUp, false);
+    }, false);
 
     this.destroy = function(){
         tracker.clear();
