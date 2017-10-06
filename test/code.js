@@ -688,6 +688,24 @@ function match(el, selector) {
   return false;
 }
 
+function getTarget(target, targets){
+    if ( targets === void 0 ) { targets = []; }
+
+
+    for(var i=0; i<targets.length; i++){
+        if(matchesSelector(target, targets[i])){
+            return target;
+        }
+
+        if(target.children.length){
+            var el = target.querySelector(targets[i]);
+            if(el) { return el; }
+        }
+    }
+
+    return null;
+}
+
 /*
 object-assign
 (c) Sindre Sorhus
@@ -971,37 +989,9 @@ CharTree.prototype.nextPhrase = function nextPhrase (value, sep){
     return iter(tree);
 };
 
-function getTarget(target, targets){
-    if ( targets === void 0 ) { targets = []; }
-
-
-    for(var i=0; i<targets.length; i++){
-        if(matchesSelector(target, '.'+targets[i])){
-            return target;
-        }
-
-        if(target.children.length){
-            var el = target.querySelector('.'+targets[i]);
-            if(el) { return el; }
-        }
-    }
-
-    return null;
-}
-
-/*export default function getTarget(target, targets){
-    if(matches(target, '.'+targets.main)){
-        return target;
-    }
-
-    if(target.children.length && !matches(target, '.'+targets.data)){
-        return target.querySelector('.'+targets.data);
-    }
-    return target;
-}*/
-
 var noKeyDown = [9, 13, 38, 40];
 
+//import getTarget from './lib/get_target.js';
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) { ref = {}; }
     var parent = ref.parent; if ( parent === void 0 ) { parent = '<ol></ol>'; }
@@ -1125,7 +1115,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     .on('mousedown', function (event){
         if(!down){
             down = true;
-            var el = getTarget(event.target, [classes.data]);
+            var el = getTarget(event.target, [
+                classes.data].map(function (c){ return '.'+c; }));
             select.call(self, el.dataset[dataKey], el);
         }
     }, false)
@@ -1248,7 +1239,7 @@ try{
         parent: '<ol></ol>',
         separator: '[ ]+',
         render: function render(data){
-            return ("<li>" + (data.value) + "</li>");
+            return ("<li class=\"value-target\">" + (data.value) + "</li>");
         },
         activate: function activate(event){
             this.show();

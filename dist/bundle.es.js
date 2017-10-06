@@ -1,6 +1,7 @@
 import { toElement } from 'dom-elementals';
-import matches from 'matches-selector';
+import matchesSelector from 'matches-selector';
 import camelcase from 'camelcase';
+import nearestTarget from 'dom-nearest-target';
 import events from 'dom-eve';
 
 var CharTree = function CharTree(){
@@ -117,37 +118,9 @@ CharTree.prototype.nextPhrase = function nextPhrase (value, sep){
     return iter(tree);
 };
 
-function getTarget(target, targets){
-    if ( targets === void 0 ) targets = [];
-
-
-    for(var i=0; i<targets.length; i++){
-        if(matches(target, '.'+targets[i])){
-            return target;
-        }
-
-        if(target.children.length){
-            var el = target.querySelector('.'+targets[i]);
-            if(el) { return el; }
-        }
-    }
-
-    return null;
-}
-
-/*export default function getTarget(target, targets){
-    if(matches(target, '.'+targets.main)){
-        return target;
-    }
-
-    if(target.children.length && !matches(target, '.'+targets.data)){
-        return target.querySelector('.'+targets.data);
-    }
-    return target;
-}*/
-
 var noKeyDown = [9, 13, 38, 40];
 
+//import getTarget from './lib/get_target.js';
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     if ( ref === void 0 ) ref = {};
     var parent = ref.parent; if ( parent === void 0 ) parent = '<ol></ol>';
@@ -271,7 +244,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     .on('mousedown', function (event){
         if(!down){
             down = true;
-            var el = getTarget(event.target, [classes.data]);
+            var el = nearestTarget(event.target, [
+                classes.data].map(function (c){ return '.'+c; }));
             select.call(self, el.dataset[dataKey], el);
         }
     }, false)

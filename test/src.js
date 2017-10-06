@@ -5,7 +5,7 @@ try{
         parent: '<ol></ol>',
         separator: '[ ]+',
         render(data){
-            return `<li>${data.value}</li>`;
+            return `<li class="value-target">${data.value}</li>`;
         },
         activate(event){
             this.show();

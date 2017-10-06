@@ -2,7 +2,8 @@ import { toElement } from 'dom-elementals';
 import matches from 'matches-selector';
 import camelcase from 'camelcase';
 import CharTree from './lib/char_tree.js';
-import getTarget from './lib/get_target.js';
+//import getTarget from './lib/get_target.js';
+import nearestTarget from 'dom-nearest-target';
 import { noKeyDown } from './lib/data.js';
 import events from 'dom-eve';
 
@@ -144,7 +145,8 @@ class DOMTextAutocomplete {
         .on('mousedown', event=>{
             if(!down){
                 down = true;
-                let el = getTarget(event.target, [classes.data]);
+                let el = nearestTarget(event.target, [
+                    classes.data].map(c=>'.'+c));
                 select.call(self, el.dataset[dataKey], el);
             }
         }, false)
