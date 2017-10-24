@@ -6,6 +6,7 @@ import CharTree from './lib/char_tree.js';
 import nearestTarget from 'dom-nearest-target';
 import { noKeyDown } from './lib/data.js';
 import events from 'dom-eve';
+import _arrowSelect from 'dom-arrow-select';
 
 
 class DOMTextAutocomplete {
@@ -22,7 +23,8 @@ class DOMTextAutocomplete {
         },
         activate = function(){
             this.show();
-        }
+        },
+        arrowSelect = null
     } = {}){
         const self = this;
 
@@ -35,6 +37,7 @@ class DOMTextAutocomplete {
         }
 
         this._render = render;
+
 
         this.input.setAttribute('tabindex', '-1');
 
@@ -49,6 +52,12 @@ class DOMTextAutocomplete {
         classes = this.classes = {
             main, data, selected
         };
+
+        this.arrowSelect = !!arrowSelect
+        ? arrowSelect
+        : _arrowSelect({
+            selectID: selected
+        });
 
         this.searchable = new CharTree();
 
@@ -66,6 +75,7 @@ class DOMTextAutocomplete {
 
         this.element = toElement(parent);
         this.element.style.opacity = 0;
+        this.arrowSelect.focus(this.element);
 
         function run(event){
             //Debounce the dropdown activation
@@ -89,14 +99,14 @@ class DOMTextAutocomplete {
 
         function onArrow(event){
             if(self.showing){
-                let selected = self.element.querySelector('.'+selected);
+                /*let selected = self.element.querySelector('.'+selected);
                 let children = self.children;
                 if(!selected){
                     this.choose(0);
                 }else{
                     let index = children.indexOf(selected);
                     this.choose(index);
-                }
+                }*/
             }
         }
 
@@ -125,7 +135,7 @@ class DOMTextAutocomplete {
             }
             if(keyCode === 9){
                 onTab(event);
-            }else
+            }/*else
 
             if(self.showing){
                 if(keyCode === 40){
@@ -133,7 +143,7 @@ class DOMTextAutocomplete {
                 }else if(keyCode === 38){
                     self.choose(-1);
                 }
-            }
+            }*/
         }, false)
         .on('keydown', event=>{
             if(event.keyCode === 9){

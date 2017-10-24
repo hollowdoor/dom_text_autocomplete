@@ -3,6 +3,7 @@ import matchesSelector from 'matches-selector';
 import camelcase from 'camelcase';
 import nearestTarget from 'dom-nearest-target';
 import events from 'dom-eve';
+import _arrowSelect from 'dom-arrow-select';
 
 var CharTree = function CharTree(){
     this.tree = {branches: {}, items: []};
@@ -136,6 +137,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var activate = ref.activate; if ( activate === void 0 ) activate = function(){
         this.show();
     };
+    var arrowSelect = ref.arrowSelect; if ( arrowSelect === void 0 ) arrowSelect = null;
 
     var self = this;
 
@@ -149,6 +151,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     this._render = render;
 
+
     this.input.setAttribute('tabindex', '-1');
 
     var ref$1 = (classes || {});
@@ -161,6 +164,12 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     classes = this.classes = {
         main: main, data: data, selected: selected
     };
+
+    this.arrowSelect = !!arrowSelect
+    ? arrowSelect
+    : _arrowSelect({
+        selectID: selected
+    });
 
     this.searchable = new CharTree();
 
@@ -178,6 +187,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
 
     this.element = toElement(parent);
     this.element.style.opacity = 0;
+    this.arrowSelect.focus(this.element);
 
     function run(event){
         //Debounce the dropdown activation
@@ -224,7 +234,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
         }
         if(keyCode === 9){
             onTab(event);
-        }else
+        }/*else
 
         if(self.showing){
             if(keyCode === 40){
@@ -232,7 +242,7 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
             }else if(keyCode === 38){
                 self.choose(-1);
             }
-        }
+        }*/
     }, false)
     .on('keydown', function (event){
         if(event.keyCode === 9){

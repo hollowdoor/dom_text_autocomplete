@@ -21,6 +21,7 @@ try{
 
     let data = [
         {value: 'The Thing'},
+        {value: 'The Terminator'},
         {value: 'Super man'},
         {value: 'Legend of Sleepy Hollow'},
         {value: 'The Shining'},
