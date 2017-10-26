@@ -15,10 +15,8 @@ class DOMTextAutocomplete {
         const tracker = events.track();
         events(input, tracker)
         .on('keyup', event=>{
-            let info = {};
-            info.which = info.keyCode = event.which || event.keyCode;
             if(allowEntry){
-                if(!allowEntry(info)){
+                if(!allowEntry(event)){
                     return;
                 }
             }
@@ -36,14 +34,12 @@ class DOMTextAutocomplete {
         let value = this.input.value;
         let found = this.searchable.findAll(value);
         parent.innerHTML = '';
-        console.log(found)
         found.forEach(data=>{
             let html = this._render(data);
             parent.insertAdjacentHTML(
                 'beforeend',
                 html
             );
-            parent.lastChild.dataset[this.dataKey] = data.value;
         });
         return !!found.length;
     }
@@ -55,6 +51,7 @@ class DOMTextAutocomplete {
     }
     empty(){
         this.searchable.empty();
+        return this;
     }
 }
 

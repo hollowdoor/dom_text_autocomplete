@@ -26,7 +26,7 @@ export default class CharTree {
     remove(...datas){
         datas.forEach(data=>{
             let next = this.tree, last;
-            let list = data.value.split('');
+            let list = data.split('');
 
             for(let i=0; i<list.length; i++){
                 let char = list[i];

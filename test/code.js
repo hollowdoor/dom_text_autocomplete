@@ -205,7 +205,7 @@ CharTree.prototype.remove = function remove (){
 
     datas.forEach(function (data){
         var next = this$1.tree, last;
-        var list = data.value.split('');
+        var list = data.split('');
 
         for(var i=0; i<list.length; i++){
             var char = list[i];
@@ -301,10 +301,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var tracker = events.track();
     events(input, tracker)
     .on('keyup', function (event){
-        var info = {};
-        info.which = info.keyCode = event.which || event.keyCode;
         if(allowEntry){
-            if(!allowEntry(info)){
+            if(!allowEntry(event)){
                 return;
             }
         }
@@ -324,14 +322,12 @@ DOMTextAutocomplete.prototype.fill = function fill (parent){
     var value = this.input.value;
     var found = this.searchable.findAll(value);
     parent.innerHTML = '';
-    console.log(found);
     found.forEach(function (data){
         var html = this$1._render(data);
         parent.insertAdjacentHTML(
             'beforeend',
             html
         );
-        parent.lastChild.dataset[this$1.dataKey] = data.value;
     });
     return !!found.length;
 };
@@ -349,6 +345,7 @@ DOMTextAutocomplete.prototype.push = function push (){
 };
 DOMTextAutocomplete.prototype.empty = function empty (){
     this.searchable.empty();
+    return this;
 };
 
 function autoComplete(input, options){
@@ -1880,16 +1877,18 @@ try{
         selectID: 'auto-selected'
     });
     as.focus(list);
+
     var complete = autoComplete(document.querySelector('input'), {
         parent: '<ol></ol>',
         separator: '[ ]+',
         allowEntry: function allowEntry(event){
-            return [37, 38, 39, 40].indexOf(event.which) === -1;
+            return [37, 38, 39, 40]
+            .indexOf(event.which || event.keyCode) === -1;
         },
         read: function read(){
             //return fs.readDir(name)
             //.then(files=>this.push(files));
-            (ref = this).push.apply(ref, data);
+            (ref = this.empty()).push.apply(ref, data);
             var ref;
         },
         entry: function entry(){
@@ -1899,11 +1898,10 @@ try{
                 list.style.display = 'block';
             }else{
                 list.style.display = 'none';
-                this.empty();
             }
         },
         render: function render(data){
-            return ("<li class=\"value-target\">" + data + "</li>");
+            return ("<li class=\"value-target\" data-value=\"" + data + "\">" + data + "</li>");
         }/*,
         activate(event){
             this.show();

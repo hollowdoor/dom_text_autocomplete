@@ -18,16 +18,18 @@ try{
         selectID: 'auto-selected'
     });
     as.focus(list);
+
     const complete = autoComplete(document.querySelector('input'), {
         parent: '<ol></ol>',
         separator: '[ ]+',
         allowEntry(event){
-            return [37, 38, 39, 40].indexOf(event.which) === -1;
+            return [37, 38, 39, 40]
+            .indexOf(event.which || event.keyCode) === -1;
         },
         read(){
             //return fs.readDir(name)
             //.then(files=>this.push(files));
-            this.push(...data);
+            this.empty().push(...data);
         },
         entry(){
             console.log('ok')
@@ -36,11 +38,10 @@ try{
                 list.style.display = 'block';
             }else{
                 list.style.display = 'none';
-                this.empty();
             }
         },
         render(data){
-            return `<li class="value-target">${data}</li>`;
+            return `<li class="value-target" data-value="${data}">${data}</li>`;
         }/*,
         activate(event){
             this.show();

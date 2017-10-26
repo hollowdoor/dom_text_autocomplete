@@ -201,7 +201,7 @@ CharTree.prototype.remove = function remove (){
 
     datas.forEach(function (data){
         var next = this$1.tree, last;
-        var list = data.value.split('');
+        var list = data.split('');
 
         for(var i=0; i<list.length; i++){
             var char = list[i];
@@ -297,10 +297,8 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var tracker = events.track();
     events(input, tracker)
     .on('keyup', function (event){
-        var info = {};
-        info.which = info.keyCode = event.which || event.keyCode;
         if(allowEntry){
-            if(!allowEntry(info)){
+            if(!allowEntry(event)){
                 return;
             }
         }
@@ -320,14 +318,12 @@ DOMTextAutocomplete.prototype.fill = function fill (parent){
     var value = this.input.value;
     var found = this.searchable.findAll(value);
     parent.innerHTML = '';
-    console.log(found);
     found.forEach(function (data){
         var html = this$1._render(data);
         parent.insertAdjacentHTML(
             'beforeend',
             html
         );
-        parent.lastChild.dataset[this$1.dataKey] = data.value;
     });
     return !!found.length;
 };
@@ -343,6 +339,7 @@ DOMTextAutocomplete.prototype.push = function push (){
 };
 DOMTextAutocomplete.prototype.empty = function empty (){
     this.searchable.empty();
+    return this;
 };
 
 function autoComplete(input, options){
