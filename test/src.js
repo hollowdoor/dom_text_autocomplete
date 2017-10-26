@@ -13,13 +13,14 @@ let data = [
 
 try{
     const list = toElement('<ol></ol>');
+    const input = document.querySelector('input');
     document.body.appendChild(list);
     const as = arrowSelect({
         selectID: 'auto-selected'
     });
     as.focus(list);
 
-    const complete = autoComplete(document.querySelector('input'), {
+    const complete = autoComplete(input, {
         parent: '<ol></ol>',
         separator: '[ ]+',
         allowEntry(event){
@@ -32,12 +33,18 @@ try{
             this.empty().push(...data);
         },
         entry(){
-            console.log('ok')
             let filled = this.fill(list);
             if(filled){
                 list.style.display = 'block';
             }else{
                 list.style.display = 'none';
+            }
+        },
+        edit(){
+
+            this.query('.auto-selected', list, 'value');
+            if(list.offsetParent){
+                this.value(list.querySelector('.auto-selected').dataset.value);
             }
         },
         render(data){

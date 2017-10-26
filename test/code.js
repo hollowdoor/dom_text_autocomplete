@@ -1899,6 +1899,7 @@ try{
             }else{
                 list.style.display = 'none';
             }
+            console.log(list.offsetHeight);
         },
         render: function render(data){
             return ("<li class=\"value-target\" data-value=\"" + data + "\">" + data + "</li>");
