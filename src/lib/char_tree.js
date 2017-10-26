@@ -2,19 +2,22 @@ export default class CharTree {
     constructor(){
         this.tree = {branches: {}, items: []};
     }
+    empty(){
+        this.tree = {branches: {}, items: []};
+    }
     push(...datas){
         datas.forEach(data=>{
 
             let next = this.tree;
-            let list = data.value.split('');
+            let list = data.split('');
 
-            list.forEach(char=>{
-                let key = char.toLowerCase();
+            list.forEach(ch=>{
+                let key = ch.toLowerCase();
                 next = (next.branches[key] = next.branches[key] || Object.create(null));
                 next.branches = next.branches || Object.create(null);
                 next.items = next.items || [];
                 next.items.push(data);
-                next.value = char;
+                next.value = ch;
             });
 
             next.leaf = true;
