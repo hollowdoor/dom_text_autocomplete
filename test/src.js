@@ -16,9 +16,21 @@ try{
     const input = document.querySelector('input');
     document.body.appendChild(list);
     const as = arrowSelect({
-        selectID: 'auto-selected'
+        selectID: 'auto-selected',
+        selected(next, prev){
+            this.unSelect(prev);
+            this.select(next);
+            input.value = next.dataset.value;
+        }
     });
+
     as.focus(list);
+    as.on('enter', elements=>{
+        input.value = elements[0].dataset.value;
+    });
+    as.on('pointer', elements=>{
+        input.value = elements[0].dataset.value;
+    });
 
     const complete = autoComplete(input, {
         parent: '<ol></ol>',
@@ -39,14 +51,14 @@ try{
             }else{
                 list.style.display = 'none';
             }
-        },
+        },/*
         edit(){
 
             this.query('.auto-selected', list, 'value');
             if(list.offsetParent){
                 this.value(list.querySelector('.auto-selected').dataset.value);
             }
-        },
+        },*/
         render(data){
             return `<li class="value-target" data-value="${data}">${data}</li>`;
         }/*,

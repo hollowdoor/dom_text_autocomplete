@@ -331,6 +331,12 @@ DOMTextAutocomplete.prototype.fill = function fill (parent){
     });
     return !!found.length;
 };
+DOMTextAutocomplete.prototype.query = function query (element, selector){
+    /*let el = element.querySelector(selector);
+    if(el){
+        this.input.value = el.dataset[];
+    }*/
+};
 DOMTextAutocomplete.prototype.push = function push (){
         var arguments$1 = arguments;
 
@@ -1872,13 +1878,19 @@ var data = [
 
 try{
     var list = toElement('<ol></ol>');
+    var input = document.querySelector('input');
     document.body.appendChild(list);
     var as = arrowSelect({
-        selectID: 'auto-selected'
+        selectID: 'auto-selected',
+        selected: function selected(next, prev){
+            this.unSelect(prev);
+            this.select(next);
+            input.value = next.dataset.value;
+        }
     });
     as.focus(list);
 
-    var complete = autoComplete(document.querySelector('input'), {
+    var complete = autoComplete(input, {
         parent: '<ol></ol>',
         separator: '[ ]+',
         allowEntry: function allowEntry(event){
@@ -1892,15 +1904,20 @@ try{
             var ref;
         },
         entry: function entry(){
-            console.log('ok');
             var filled = this.fill(list);
             if(filled){
                 list.style.display = 'block';
             }else{
                 list.style.display = 'none';
             }
-            console.log(list.offsetHeight);
-        },
+        },/*
+        edit(){
+
+            this.query('.auto-selected', list, 'value');
+            if(list.offsetParent){
+                this.value(list.querySelector('.auto-selected').dataset.value);
+            }
+        },*/
         render: function render(data){
             return ("<li class=\"value-target\" data-value=\"" + data + "\">" + data + "</li>");
         }/*,

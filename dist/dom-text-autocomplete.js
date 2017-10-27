@@ -327,6 +327,12 @@ DOMTextAutocomplete.prototype.fill = function fill (parent){
     });
     return !!found.length;
 };
+DOMTextAutocomplete.prototype.query = function query (element, selector){
+    /*let el = element.querySelector(selector);
+    if(el){
+        this.input.value = el.dataset[];
+    }*/
+};
 DOMTextAutocomplete.prototype.push = function push (){
         var this$1 = this;
         var values = [], len = arguments.length;

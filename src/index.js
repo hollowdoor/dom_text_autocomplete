@@ -44,10 +44,10 @@ class DOMTextAutocomplete {
         return !!found.length;
     }
     query(element, selector){
-        let el = element.querySelector(selector);
+        /*let el = element.querySelector(selector);
         if(el){
             this.input.value = el.dataset[];
-        }
+        }*/
     }
     push(...values){
         values.forEach(value=>{
