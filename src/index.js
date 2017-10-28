@@ -4,7 +4,13 @@ import CharTree from './lib/char_tree.js';
 class DOMTextAutocomplete {
     constructor(input, {
         read = null,
-        allowEntry = null,
+        allowEntry = function(event){
+            let key = event.which || event.keyCode;
+            console.log('key ', key)
+            return (
+                  !(key >= 37 && key <= 40) && key !== 13
+            );
+        },
         entry = null,
         render = null
     }){
@@ -15,8 +21,9 @@ class DOMTextAutocomplete {
         const tracker = events.track();
         events(input, tracker)
         .on('keyup', event=>{
+            console.log('allowEntry ',allowEntry.call(this, event))
             if(allowEntry){
-                if(!allowEntry(event)){
+                if(!allowEntry.call(this, event)){
                     return;
                 }
             }

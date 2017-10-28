@@ -290,7 +290,13 @@ CharTree.prototype.nextPhrase = function nextPhrase (value, sep){
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var this$1 = this;
     var read = ref.read; if ( read === void 0 ) { read = null; }
-    var allowEntry = ref.allowEntry; if ( allowEntry === void 0 ) { allowEntry = null; }
+    var allowEntry = ref.allowEntry; if ( allowEntry === void 0 ) { allowEntry = function(event){
+        var key = event.which || event.keyCode;
+        console.log('key ', key);
+        return (
+              !(key >= 37 && key <= 40) && key !== 13
+        );
+    }; }
     var entry = ref.entry; if ( entry === void 0 ) { entry = null; }
     var render = ref.render; if ( render === void 0 ) { render = null; }
 
@@ -301,8 +307,9 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var tracker = events.track();
     events(input, tracker)
     .on('keyup', function (event){
+        console.log('allowEntry ',allowEntry.call(this$1, event));
         if(allowEntry){
-            if(!allowEntry(event)){
+            if(!allowEntry.call(this$1, event)){
                 return;
             }
         }
@@ -892,6 +899,35 @@ function step(element, direction, ref){
     return directions[direction](element, range, wrap);
 }
 
+var proto = typeof Element !== 'undefined' ? Element.prototype : {};
+var vendor = proto.matches
+  || proto.matchesSelector
+  || proto.webkitMatchesSelector
+  || proto.mozMatchesSelector
+  || proto.msMatchesSelector
+  || proto.oMatchesSelector;
+
+var matchesSelector = match;
+
+/**
+ * Match `el` to `selector`.
+ *
+ * @param {Element} el
+ * @param {String} selector
+ * @return {Boolean}
+ * @api public
+ */
+
+function match(el, selector) {
+  if (!el || el.nodeType !== 1) { return false; }
+  if (vendor) { return vendor.call(el, selector); }
+  var nodes = el.parentNode.querySelectorAll(selector);
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i] == el) { return true; }
+  }
+  return false;
+}
+
 // Production steps of ECMA-262, Edition 6, 22.1.2.1
 // Reference: http://www.ecma-international.org/ecma-262/6.0/#sec-array.from
 var polyfill$2 = (function() {
@@ -1238,6 +1274,101 @@ function cleanKeysMixin(dest){
     }
 }
 
+var Handler = function Handler(name, listener, matchListener){
+    if ( matchListener === void 0 ) { matchListener = null; }
+
+    this.name = name;
+    this.matchListener = this.listener = listener;
+    if(matchListener !== null){
+        this.matchListener = matchListener;
+    }
+};
+
+var MoreEvents = function MoreEvents(context){
+    this.listeners = {};
+    this.__context = context === void 0 ? this : context;
+};
+MoreEvents.prototype.addListener = function addListener (name, listener, matchListener){
+    if(this.listeners[name] === void 0){
+        this.listeners[name] = [];
+    }
+    this.listeners[name].push(new Handler(name, listener, matchListener));
+
+    return this;
+};
+MoreEvents.prototype.removeListener = function removeListener (name, listener){
+        var this$1 = this;
+
+    if(this.listeners[name] === void 0 || !this.listeners[name].length)
+        { return this; }
+
+    for(var i=0; i<this.listeners[name].length; i++){
+        var current = this$1.listeners[name][i];
+        //The matchListener might be different
+        //than the actual listener
+        if(current.matchListener === listener){
+            this$1.listeners[name].splice(i, 1);
+            --i;
+        }
+    }
+
+    return this;
+};
+MoreEvents.prototype.emitListeners = function emitListeners (name){
+        var arguments$1 = arguments;
+
+        var this$1 = this;
+        var args = [], len = arguments.length - 1;
+        while ( len-- > 0 ) { args[ len ] = arguments$1[ len + 1 ]; }
+
+    if(this.listeners[name] === void 0 || !this.listeners[name].length) { return; }
+
+    for(var i=0; i<this.listeners[name].length; i++){
+        (this$1.listeners[name][i].listener)
+        .apply(this$1.__context, args);
+    }
+    return this;
+};
+MoreEvents.prototype.removeAll = function removeAll (name){
+    delete this.listeners[name];
+};
+MoreEvents.prototype.dispose = function dispose (){
+    this.listeners = this.__context = null;
+};
+
+var Emitter = (function (MoreEvents) {
+    function Emitter(context){
+        MoreEvents.call(this, context);
+    }
+
+    if ( MoreEvents ) { Emitter.__proto__ = MoreEvents; }
+    Emitter.prototype = Object.create( MoreEvents && MoreEvents.prototype );
+    Emitter.prototype.constructor = Emitter;
+    Emitter.prototype.on = function on (name, listener){
+        return this.addListener(name, listener);
+    };
+    Emitter.prototype.off = function off (name, listener){
+        return this.removeListener(name, listener);
+    };
+    Emitter.prototype.one = function one (name, listener){
+        return this.on(name, onceListener);
+    };
+    Emitter.prototype.emit = function emit (name){
+        var arguments$1 = arguments;
+
+        var args = [], len = arguments.length - 1;
+        while ( len-- > 0 ) { args[ len ] = arguments$1[ len + 1 ]; }
+
+        return (ref = this).emitListeners.apply(ref, [ name ].concat( args ));
+        var ref;
+    };
+    Emitter.prototype.clear = function clear (name){
+        this.removeAll(name);
+    };
+
+    return Emitter;
+}(MoreEvents));
+
 var keySet = rawObject({
     '37': 'left',
     '38': 'up',
@@ -1249,179 +1380,210 @@ function getKey(keyCode){
     return keySet[keyCode] || null;
 }
 
-var DOMArrowSelect = function DOMArrowSelect(ref){
-    var this$1 = this;
-    if ( ref === void 0 ) { ref = {}; }
-    var selectID = ref.selectID; if ( selectID === void 0 ) { selectID = 'dom-arrow-select-selected'; }
-    var selected = ref.selected; if ( selected === void 0 ) { selected = function(next, prev){
-        this.unSelect(prev);
-        this.select(next);
-    }; }
-    var outside = ref.outside; if ( outside === void 0 ) { outside = function(){}; }
-    var step$$1 = ref.step; if ( step$$1 === void 0 ) { step$$1 = function(){}; }
-    var classList = ref.classList; if ( classList === void 0 ) { classList = function(element){
-        return element.classList;
-    }; }
+var DOMArrowSelect = (function (Emitter$$1) {
+    function DOMArrowSelect(ref){
+        var this$1 = this;
+        if ( ref === void 0 ) { ref = {}; }
+        var selectID = ref.selectID; if ( selectID === void 0 ) { selectID = 'dom-arrow-select-selected'; }
+        var selected = ref.selected; if ( selected === void 0 ) { selected = function(next, prev){
+            this.unSelect(prev);
+            this.select(next);
+        }; }
+        var outside = ref.outside; if ( outside === void 0 ) { outside = function(){}; }
+        var step$$1 = ref.step; if ( step$$1 === void 0 ) { step$$1 = function(){}; }
+        var classList = ref.classList; if ( classList === void 0 ) { classList = function(element){
+            return element.classList;
+        }; }
 
+        Emitter$$1.call(this);
+        this.element = null;
+        this.current = null;
+        this._selected = selected;
+        this._outside = outside;
+        this._classList = classList;
+        this._step = function(dir){
+            return step$$1.call(this, dir) || {};
+        };
 
-    this.element = null;
-    this.current = null;
-    this._selected = selected;
-    this._outside = outside;
-    this._classList = classList;
-    this._step = function(dir){
-        return step$$1.call(this, dir) || {};
-    };
+        Object.defineProperty(this, 'selectID', {
+            value: selectID,
+            enumerable: true
+        });
 
-    Object.defineProperty(this, 'selectID', {
-        value: selectID,
-        enumerable: true
-    });
+        mixinKeys(this);
 
-    mixinKeys(this);
+        var tracker = this.tracker = events.track();
 
-    var tracker = this.tracker = events.track();
+        events(document, tracker).on('keydown', function (event){
 
-    events(document, tracker).on('keydown', function (event){
+            var element = this$1.element;
+            var key = getKey(event.which || event.keyCode);
 
-        var element = this$1.element;
-        var key = getKey(event.which || event.keyCode);
+            if(key && element && element.parentNode){
+                this$1.step(key);
+            }
+        });
 
-        if(key && element && element.parentNode){
-            this$1.step(key);
-        }
-    });
+        events(document, tracker).on('mousedown', function (event){
+            if(matchesSelector(event.target, '.'+selectID)){
+                this$1.emit('pointerdown', event.target);
+                event.stopPropagation();
+            }
+        });
 
-    this.destroy = function(){
-        tracker.clear();
-        cleanKeysMixin(this);
-    };
-};
-DOMArrowSelect.prototype.step = function step$$1 (key){
-    var element = this.element;
-    var el = this.current;
-    var next = null;
-    var ref = this;
+        events(document, tracker).on('keyup', function (event){
+            if(13 !== (event.which || event.keyCode)) { return; }
+
+            if(this$1.element.offsetHeight){
+                var elements$1 = this$1.element.querySelectorAll('.'+selectID);
+                if(elements$1 && elements$1.length){
+                    this$1.emit('focusenter', arrayFrom(elements$1));
+                }
+            }
+
+            var elements = document.querySelectorAll('.'+selectID);
+            if(elements && elements.length){
+                this$1.emit('enter', arrayFrom(elements));
+            }
+        });
+
+        this.destroy = function(){
+            tracker.clear();
+            cleanKeysMixin(this);
+        };
+    }
+
+    if ( Emitter$$1 ) { DOMArrowSelect.__proto__ = Emitter$$1; }
+    DOMArrowSelect.prototype = Object.create( Emitter$$1 && Emitter$$1.prototype );
+    DOMArrowSelect.prototype.constructor = DOMArrowSelect;
+    DOMArrowSelect.prototype.step = function step$$1 (key){
+        var element = this.element;
+        var el = this.current;
+        var next = null;
+        var ref = this;
         var _step = ref._step;
         var _selected = ref._selected;
         var _outside = ref._outside;
-    var opts = _step.call(this, key);
+        var opts = _step.call(this, key);
 
-    if(!this.current){
-        next = getCorner(element, key, {
-            reverse:true,
-            xrange: opts.wrap,
-            yrange: opts.wrap
-        });
-    }else{
-        next = step(this.current, key, opts);
-    }
+        if(!this.current){
+            next = getCorner(element, key, {
+                reverse:true,
+                xrange: opts.wrap,
+                yrange: opts.wrap
+            });
+        }else{
+            next = step(this.current, key, opts);
+        }
 
-    if(next){
-        _selected.call(
-            this,
-            next,
-            this.current
-        );
-    }else{
-        _outside.call(
-            this,
-            this.current,
-            key
-        );
-    }
-    return this;
-};
-DOMArrowSelect.prototype.focus = function focus (element){
-    if(!element){
-        this.element = element;
+        if(next){
+            _selected.call(
+                this,
+                next,
+                this.current
+            );
+        }else{
+            _outside.call(
+                this,
+                this.current,
+                key
+            );
+        }
         return this;
-    }
-    this.element = getElement(element);
-    return this;
-};
-DOMArrowSelect.prototype.focused = function focused (element){
-    if(!element) { return false; }
-    var el = getElement(element);
-    return this.element === el;
-};
-DOMArrowSelect.prototype.swap = function swap (element, direction){
-    if(typeof direction !== 'string'){
-        return this.unSelectAll().focus(element);
-    }
-    return this.unSelectAll().focus(element).step(direction);
-};
-DOMArrowSelect.prototype.unSelect = function unSelect (child){
-    if(child === null) { return this; }
-    if(!this.element) { return this; }
-    child = getElement(child, this.element);
+    };
+    DOMArrowSelect.prototype.focus = function focus (element){
+        if(!element){
+            this.element = element;
+            return this;
+        }
+        this.element = getElement(element);
+        return this;
+    };
+    DOMArrowSelect.prototype.focused = function focused (element){
+        if(!element) { return false; }
+        var el = getElement(element);
+        return this.element === el;
+    };
+    DOMArrowSelect.prototype.swap = function swap (element, direction){
+        if(typeof direction !== 'string'){
+            return this.unSelectAll().focus(element);
+        }
+        return this.unSelectAll().focus(element).step(direction);
+    };
+    DOMArrowSelect.prototype.unSelect = function unSelect (child){
+        if(child === null) { return this; }
+        if(!this.element) { return this; }
+        child = getElement(child, this.element);
 
-    if(child){
+        if(child){
+            if(child.parentNode !== this.element){
+                throw new TypeError(((child.outerHTML) + " is not a child of " + (this.element.outerHTML)));
+            }
+            this._classList(child).remove(this.selectID);
+            if(this.current === child){
+                this.current = null;
+            }
+        }
+        return this;
+    };
+    DOMArrowSelect.prototype.select = function select (child){
+        if(child === null) { return this; }
+        if(!this.element) { return this; }
+        child = getElement(child, this.element);
+
         if(child.parentNode !== this.element){
             throw new TypeError(((child.outerHTML) + " is not a child of " + (this.element.outerHTML)));
         }
-        this._classList(child).remove(this.selectID);
-        if(this.current === child){
-            this.current = null;
+
+        if(child !== this.current){
+            this._classList(child).add(this.selectID);
+            this.current = child;
         }
-    }
-    return this;
-};
-DOMArrowSelect.prototype.select = function select (child){
-    if(child === null) { return this; }
-    if(!this.element) { return this; }
-    child = getElement(child, this.element);
-
-    if(child.parentNode !== this.element){
-        throw new TypeError(((child.outerHTML) + " is not a child of " + (this.element.outerHTML)));
-    }
-
-    if(child !== this.current){
-        this._classList(child).add(this.selectID);
-        this.current = child;
-    }
-    return this;
-};
-DOMArrowSelect.prototype.unSelectAll = function unSelectAll (){
+        return this;
+    };
+    DOMArrowSelect.prototype.unSelectAll = function unSelectAll (){
         var this$1 = this;
 
 
-    if(!this.element) { return this; }
+        if(!this.element) { return this; }
 
-    arrayFrom(this.element.querySelectorAll('.'+this.selectID))
-    .forEach(function (child){
-        this$1.unSelect(child);
-    });
-    this.current = null;
-    return this;
-};
-DOMArrowSelect.prototype.selectAll = function selectAll (){
+        arrayFrom(this.element.querySelectorAll('.'+this.selectID))
+        .forEach(function (child){
+            this$1.unSelect(child);
+        });
+        this.current = null;
+        return this;
+    };
+    DOMArrowSelect.prototype.selectAll = function selectAll (){
         var this$1 = this;
 
-    if(!this.element) { return this; }
-    var list = this.element.children;
-    for(var i=0; i<list.length; i++){
-        this$1.select(list[i]);
-    }
-    this.current = list[list.length - 1];
-    return this;
-};
-DOMArrowSelect.prototype.selectIndex = function selectIndex (index){
-    if(!this.element) { return this; }
-    if(index < 0){
-        index = this.element.children.length + index;
-    }
-    this.select(this.element.children[index]);
-    return this;
-};
-DOMArrowSelect.prototype.unSelectIndex = function unSelectIndex (index){
-    if(!this.element) { return this; }
-    if(index < 0){
-        index = this.element.children.length + index;
-    }
-    this.unSelect(this.element.children[index]);
-    return this;
-};
+        if(!this.element) { return this; }
+        var list = this.element.children;
+        for(var i=0; i<list.length; i++){
+            this$1.select(list[i]);
+        }
+        this.current = list[list.length - 1];
+        return this;
+    };
+    DOMArrowSelect.prototype.selectIndex = function selectIndex (index){
+        if(!this.element) { return this; }
+        if(index < 0){
+            index = this.element.children.length + index;
+        }
+        this.select(this.element.children[index]);
+        return this;
+    };
+    DOMArrowSelect.prototype.unSelectIndex = function unSelectIndex (index){
+        if(!this.element) { return this; }
+        if(index < 0){
+            index = this.element.children.length + index;
+        }
+        this.unSelect(this.element.children[index]);
+        return this;
+    };
+
+    return DOMArrowSelect;
+}(Emitter));
 
 function arrowSelect(element, options){
     return new DOMArrowSelect(element, options);
@@ -1885,18 +2047,36 @@ try{
         selected: function selected(next, prev){
             this.unSelect(prev);
             this.select(next);
-            input.value = next.dataset.value;
         }
     });
+
     as.focus(list);
+    as.on('focusenter', function (elements){
+        input.value = elements[0].dataset.value;
+    });
+    as.on('pointerdown', function (elements){
+        input.value = elements[0].dataset.value;
+    });
+    /*as.on('replaced', ()=>{
+        as.current = null;
+    });*/
+
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        console.log(mutation.type);
+        as.current = null;
+      });
+    });
+    observer.observe(list, {childList: true});
+
 
     var complete = autoComplete(input, {
         parent: '<ol></ol>',
         separator: '[ ]+',
-        allowEntry: function allowEntry(event){
-            return [37, 38, 39, 40]
+        /*allowEntry(event){
+            return [37, 38, 39, 40, 13]
             .indexOf(event.which || event.keyCode) === -1;
-        },
+        },*/
         read: function read(){
             //return fs.readDir(name)
             //.then(files=>this.push(files));
@@ -1905,6 +2085,7 @@ try{
         },
         entry: function entry(){
             var filled = this.fill(list);
+            as.emit('replaced');
             if(filled){
                 list.style.display = 'block';
             }else{

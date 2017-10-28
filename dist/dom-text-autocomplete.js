@@ -286,7 +286,13 @@ CharTree.prototype.nextPhrase = function nextPhrase (value, sep){
 var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var this$1 = this;
     var read = ref.read; if ( read === void 0 ) read = null;
-    var allowEntry = ref.allowEntry; if ( allowEntry === void 0 ) allowEntry = null;
+    var allowEntry = ref.allowEntry; if ( allowEntry === void 0 ) allowEntry = function(event){
+        var key = event.which || event.keyCode;
+        console.log('key ', key);
+        return (
+              !(key >= 37 && key <= 40) && key !== 13
+        );
+    };
     var entry = ref.entry; if ( entry === void 0 ) entry = null;
     var render = ref.render; if ( render === void 0 ) render = null;
 
@@ -297,8 +303,9 @@ var DOMTextAutocomplete = function DOMTextAutocomplete(input, ref){
     var tracker = events.track();
     events(input, tracker)
     .on('keyup', function (event){
+        console.log('allowEntry ',allowEntry.call(this$1, event));
         if(allowEntry){
-            if(!allowEntry(event)){
+            if(!allowEntry.call(this$1, event)){
                 return;
             }
         }

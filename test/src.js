@@ -20,25 +20,36 @@ try{
         selected(next, prev){
             this.unSelect(prev);
             this.select(next);
-            input.value = next.dataset.value;
         }
     });
 
     as.focus(list);
-    as.on('enter', elements=>{
+    as.on('focusenter', elements=>{
         input.value = elements[0].dataset.value;
     });
-    as.on('pointer', elements=>{
+    as.on('pointerdown', elements=>{
         input.value = elements[0].dataset.value;
     });
+    /*as.on('replaced', ()=>{
+        as.current = null;
+    });*/
+
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        console.log(mutation.type);
+        as.current = null;
+      });
+    });
+    observer.observe(list, {childList: true});
+
 
     const complete = autoComplete(input, {
         parent: '<ol></ol>',
         separator: '[ ]+',
-        allowEntry(event){
-            return [37, 38, 39, 40]
+        /*allowEntry(event){
+            return [37, 38, 39, 40, 13]
             .indexOf(event.which || event.keyCode) === -1;
-        },
+        },*/
         read(){
             //return fs.readDir(name)
             //.then(files=>this.push(files));
@@ -46,6 +57,7 @@ try{
         },
         entry(){
             let filled = this.fill(list);
+            as.emit('replaced');
             if(filled){
                 list.style.display = 'block';
             }else{
